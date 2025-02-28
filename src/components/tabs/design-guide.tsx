@@ -1,156 +1,125 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Download } from "lucide-react";
+import { PDFCard } from "../pdf-card";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-import { useAtom } from "jotai";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRight, Lock, User } from "lucide-react";
-import { UpdateUser, updateUserSchema } from "@/src/schema/schema";
-import { supabase } from "@/src/lib/supabase";
-import { useToast } from "@/src/hooks/use-toast";
-import { authAtom } from "@/src/atoms/authAtom";
-import { Label } from "@/src/components/ui/label";
-import { Input } from "@/src/components/ui/input";
-import { Button } from "@/src/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/src/components/ui/dialog";
-import Loading_Animation from "@/src/components/loading/light_loading.json";
-import ResetPasswordContent from "@/src/components/dialog/reset-password";
-
-const DynamicLottie = dynamic(() => import("react-lottie"), {
-  ssr: false,
-});
+import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
 
 export default function DesignGuideTab() {
-  const [auth, setAuth] = useAtom(authAtom);
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [isloading, setIsLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isEditable, setIsEditable] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const subContractorPDFs = [
+    { title: "SubContractor Guidelines 1.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 2.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 3.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 4.pdf", size: "2.8 MB" },
+  ];
 
-  const LoadingOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: Loading_Animation,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
+  const mockupPDFs = [
+    { title: "SubContractor Guidelines 1.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 2.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 3.pdf", size: "2.8 MB" },
+    { title: "SubContractor Guidelines 4.pdf", size: "2.8 MB" },
+  ];
 
-  const form = useForm<UpdateUser>({
-    resolver: zodResolver(updateUserSchema),
-    mode: "onChange",
-  });
+  const localVendorDesignPDFs = [
+    { title: "SubContractor Guidelines 1.pdf", size: "2.8 MB" },
+  ];
+
+  const roomUpgradeDesignPDFs = [
+    { title: "SubContractor Guidelines 1.pdf", size: "2.8 MB" },
+  ];
 
   useEffect(() => {
-    if (auth.user) {
-      form.reset({
-        firstName: auth.user.first_name,
-        lastName: auth.user.last_name,
-        email: auth.user.email,
-        avatar: auth.user.avatar,
-      });
-
-      setImageUrl(auth.user.avatar);
+    if (
+      subContractorPDFs.length == 0 &&
+      mockupPDFs.length == 0 &&
+      localVendorDesignPDFs.length == 0 &&
+      roomUpgradeDesignPDFs.length == 0
+    ) {
+      setIsEmpty(true);
     }
-  }, [auth.user, form]);
+  }, []);
 
-  const isValid =
-    form.formState.isValid &&
-    form.getValues("firstName") &&
-    form.getValues("lastName") &&
-    form.getValues("email");
+  return (
+    <div className="w-full px-4 flex flex-col">
+      {isEmpty ? (
+        <div className="w-full mt-20 flex flex-col items-center justify-center">
+          <Image src="/svg/guide.svg" alt="guide" width={70} height={70} />
+          <p className="my-6 text-3xl font-bold">Complete Material Input</p>
+          <p className="text-[#718096] text-base max-w-[280px] text-center">
+            Complete Material Input to view Design Guides.
+          </p>
+          <Button className="my-6 w-[200px] text-white text-base bg-[#2365C8] rounded-lg">
+            Begin Material Input
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <div className="flex space-x-4">
+            <p className="text-xl font-semibold">Documents</p>
+            <Download />
+          </div>
+          {subContractorPDFs && subContractorPDFs.length > 0 && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-normal uppercase">
+                Subcontractor Design Guides
+              </p>
+              <div className="w-full flex flex-wrap gap-5">
+                {subContractorPDFs.map((item, idx) => {
+                  return (
+                    <PDFCard key={idx} title={item.title} size={item.size} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setImageUrl(URL.createObjectURL(selectedFile));
-    }
-  };
+          {mockupPDFs && mockupPDFs.length > 0 && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-normal uppercase">2D Mockups</p>
+              <div className="w-full flex flex-wrap gap-5">
+                {mockupPDFs.map((item, idx) => {
+                  return (
+                    <PDFCard key={idx} title={item.title} size={item.size} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-  const handleUpdateProfile = async (user: UpdateUser) => {
-    setIsLoading(true);
-    try {
-      const imgLink = await uploadImage();
+          {localVendorDesignPDFs && localVendorDesignPDFs.length > 0 && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-normal uppercase">
+                Local Vendor Design Guides
+              </p>
+              <div className="w-full flex flex-wrap gap-5">
+                {localVendorDesignPDFs.map((item, idx) => {
+                  return (
+                    <PDFCard key={idx} title={item.title} size={item.size} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-      const { data, error } = await supabase.auth.updateUser({
-        email: user.email,
-        data: {
-          first_name: user.firstName,
-          last_name: user.lastName,
-          avatar: imgLink,
-        },
-      });
-      if (error) throw error;
-
-      if (data) {
-        const userData = data.user?.user_metadata;
-        if (userData) {
-          userData.id = data.user?.id;
-          setAuth({ isAuthenticated: true, user: userData });
-        }
-        setIsEditable(false);
-      }
-    } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
-      });
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const uploadImage = async () => {
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File size exceeds limit of 5 MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const filePath = `/images/${file.name}`;
-    const { data, error } = await supabase.storage
-      .from("images")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) {
-      toast({
-        title: "Failed uploading image",
-        variant: "destructive",
-      });
-      console.error(error);
-      return;
-    }
-
-    if (data) {
-      const { data: image } = supabase.storage
-        .from("images")
-        .getPublicUrl(filePath);
-
-      setImageUrl(image.publicUrl);
-      setFile(null);
-      return image.publicUrl;
-    }
-  };
-
-  return <div className="w-full p-10 flex flex-1 flex-col"></div>;
+          {roomUpgradeDesignPDFs && roomUpgradeDesignPDFs.length > 0 && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm font-normal uppercase">
+                Room Upgrade Design Guides
+              </p>
+              <div className="w-full flex flex-wrap gap-5">
+                {roomUpgradeDesignPDFs.map((item, idx) => {
+                  return (
+                    <PDFCard key={idx} title={item.title} size={item.size} />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
