@@ -1,14 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Home,
-  Info,
-  Bath,
-  BathIcon as BathShower,
-  Bed,
-  DoorClosed,
-} from "lucide-react";
+import { useAtomValue } from "jotai";
+import dynamic from "next/dynamic";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useToast } from "@/src/hooks/use-toast";
+import { supabase } from "@/src/lib/supabase";
+import { projectAtom } from "@/src/atoms/projectAtom";
+import { headerAtom } from "@/src/atoms/headerAtom";
+import { questionAtom } from "@/src/atoms/questionAtom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import {
@@ -18,284 +18,322 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import Loading_Animation from "@/src/components/loading/light_loading.json";
+import { STATUS_INCOMPLETE_VALUE } from "@/src/constants/constants";
+const DynamicLottie = dynamic(() => import("react-lottie"), {
+  ssr: false,
+});
 
 type MaterialInputProps = {
   currentStep: number;
   setCurrentStep: (currentStep: number) => void;
 };
 
+type AnswerProps = {
+  questionId: string;
+  answer: string;
+};
+
 export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
+  const { toast } = useToast();
+  const projectData = useAtomValue(projectAtom);
+  const headerData = useAtomValue(headerAtom);
+  const questionData = useAtomValue(questionAtom);
+  const [isLoading, setIsLoading] = useState(false);
+  const [answerList, setAnswerList] = useState<AnswerProps[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(0);
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({
-    overview: true,
-    kitchen: false,
-    fullBathroom: false,
-    halfBathroom: false,
-    masterBedroom: false,
-    interiorDoors: false,
-  });
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setContainerHeight(containerRef.current.clientHeight);
-    }
-  }, [expandedSections]);
-
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+  const [expandedSections, setExpandedSections] = useState<boolean[]>([]);
+  const LoadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading_Animation,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
   };
 
-  const handleGototNextStep = () => {
+  useEffect(() => {
+    if (projectData && projectData.selectedItem) {
+      setAnswerList(projectData.selectedItem.answers || []);
+    }
+  }, [projectData]);
+
+  useEffect(() => {
+    if (headerData.list && headerData.list.length > 0) {
+      const initialExpandedSections = new Array(headerData.list.length).fill(
+        false
+      );
+      setExpandedSections(initialExpandedSections);
+    }
+  }, [headerData]);
+
+  const toggleSection = (index: number) => {
+    setExpandedSections((prev) => {
+      const updated = { ...prev };
+      updated[index] = !prev[index];
+      return updated;
+    });
+  };
+
+  const handleGotoNextStep = () => {
     setCurrentStep(currentStep + 1);
   };
 
+  const handleSaveAnswers = async () => {
+    try {
+      setIsLoading(true);
+      const questionIdList = answerList.map((item) => item.questionId);
+      const { data: questionsData, error: questionsError } = await supabase
+        .from("questions")
+        .select("id, answer, type")
+        .in("id", questionIdList);
+
+      if (questionsError) throw questionsError;
+
+      if (!questionsData || questionsData.length === 0) {
+        return []; // Return empty array if no questions found
+      }
+
+      const productQuantities: { [productId: string]: number } = {};
+      answerList.forEach((answerItem) => {
+        const question = questionsData.find(
+          (q) => q.id === answerItem.questionId
+        );
+
+        if (question) {
+          if (question.type === "number") {
+            try {
+              const answerArray = question.answer;
+              if (Array.isArray(answerArray) && answerArray.length === 1) {
+                const quantity = parseInt(answerItem.answer, 10);
+                answerArray[0].products.forEach((productId: string) => {
+                  if (!productQuantities[productId]) {
+                    productQuantities[productId] = quantity;
+                  } else {
+                    productQuantities[productId] += quantity;
+                  }
+                });
+              } else {
+                console.error(
+                  "Invalid 'number' question answer format:",
+                  question.answer
+                );
+              }
+            } catch (error) {
+              console.error("Error parsing 'number' question answer:", error);
+            }
+          } else if (question.type === "options") {
+            try {
+              const options = question.answer;
+
+              if (Array.isArray(options)) {
+                const selectedOption = options.find(
+                  (option) => option.id === answerItem.answer
+                );
+
+                if (selectedOption && Array.isArray(selectedOption.products)) {
+                  selectedOption.products.forEach((productId: string) => {
+                    if (!productQuantities[productId]) {
+                      productQuantities[productId] =
+                        (productQuantities[productId] || 0) + 1;
+                    } else {
+                      productQuantities[productId] += 1;
+                    }
+                  });
+                }
+              } else {
+                console.error(
+                  "The answer column is not in the expected format."
+                );
+              }
+            } catch (error) {
+              console.error("Error parsing question answer:", error);
+            }
+          }
+        }
+      });
+
+      const productList = Object.entries(productQuantities).map(
+        ([productId, quantity]) => ({
+          product_id: productId,
+          quantity: quantity,
+          phase: "1",
+          project_id: projectData.selectedItem.id,
+          status: STATUS_INCOMPLETE_VALUE,
+        })
+      );
+      if (productList && productList.length > 0) {
+        productList.map(async (item) => {
+          const { data, error } = await supabase
+            .from("project_products")
+            .insert(item);
+          if (error) throw error;
+        });
+      }
+
+      const answers = answerList.filter((answer: any) => answer.answer !== "");
+      const { data, error } = await supabase
+        .from("projects")
+        .update({ answers })
+        .eq("id", projectData.selectedItem.id);
+      if (error) throw error;
+      if (data) return;
+    } catch (err) {
+      console.log(err);
+      toast({
+        title: "Something wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateAnswer = (questionId: string, answer: string) => {
+    setAnswerList((prevAnswers) => {
+      const existingIndex = prevAnswers.findIndex(
+        (item) => item.questionId === questionId
+      );
+
+      if (existingIndex !== -1) {
+        const updatedAnswers = [...prevAnswers];
+        updatedAnswers[existingIndex] = { questionId, answer };
+        return updatedAnswers;
+      } else {
+        return [...prevAnswers, { questionId, answer }];
+      }
+    });
+  };
+
   return (
-    <div ref={containerRef} className="w-full">
-      <div className="relative pr-[136px]">
-        <div className="flex justify-between items-center p-10 pb-0">
-          <div>
-            <h1 className="text-2xl font-semibold">Input Form</h1>
-            <p className="text-sm text-muted-foreground">STEP 1/3</p>
-          </div>
-          <Button className="bg-[#2365C8] text-white hover:bg-blue-700">
-            Save Changes
-          </Button>
+    <div
+      ref={containerRef}
+      className="w-full relative px-10 pr-5 py-6 space-y-4 overflow-y-auto"
+    >
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold">Input Form</h1>
+          <p className="text-sm text-muted-foreground">STEP 1/3</p>
         </div>
-
-        <div className="absolute right-6 top-24 bottom-6">
-          <div className="w-[136px] flex flex-col items-center">
-            <div className="w-full flex items-center justify-end">
-              <div className="mt-[-6px] px-5 text-sm text-blue-500">
-                STEP 1 / 3
-              </div>
-              <div
-                className="w-1 bg-blue-500 rounded-full justify-end flex items-center relative"
-                style={{ height: `${containerHeight / 4}px` }}
-              >
-                <div className="absolute left-1/2 transform -translate-x-1/2 -mt-2">
-                  <div className="bg-white rounded-full p-2 border border-blue-500">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
+        <Button
+          onClick={handleSaveAnswers}
+          className="w-36 bg-[#2365C8] text-white hover:bg-blue-700"
+        >
+          {isLoading ? (
+            <div className="w-12 h-12">
+              <DynamicLottie
+                options={LoadingOptions}
+                isClickToPauseDisabled={true}
+              />
             </div>
-            <div className="w-full flex items-center justify-end">
-              <div
-                className="w-1 bg-gray-200 rounded-full mt-4"
-                style={{ height: `${containerHeight / 4 - 4}px` }}
-              ></div>
-            </div>
+          ) : (
+            <p>Save Changes</p>
+          )}
+        </Button>
+      </div>
 
-            <div className="w-full flex items-center justify-end">
-              <div
-                className="w-1 bg-gray-200 rounded-full mt-4"
-                style={{ height: `${containerHeight / 4 - 4}px` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-10 pt-4 relative">
-          <div className="mb-4 rounded-lg">
-            <button
-              className="w-full flex bg-[#F5F8FB] border rounded-lg justify-between items-center p-4"
-              onClick={() => toggleSection("overview")}
-            >
-              <div className="flex items-center">
-                <Home className="mr-2 h-5 w-5" />
-                <span className="font-medium">Overview</span>
-              </div>
-              {expandedSections.overview ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.overview && (
-              <div className="">
-                <div className="grid border px-4 py-2 rounded-lg bg-white grid-cols-[200px_1fr] gap-4">
+      <div className="w-full relative space-y-2">
+        {headerData.list &&
+          headerData.list.length > 0 &&
+          headerData.list.map((item: any, idx: number) => {
+            const questions = questionData.list.filter(
+              (question: any) => question.header === item.id
+            );
+            return (
+              <div key={idx} className="w-full space-y-[2px]">
+                <button
+                  className="w-full flex bg-[#F5F8FB] border rounded-lg justify-between items-center p-4"
+                  onClick={() => toggleSection(idx)}
+                >
                   <div className="flex items-center">
-                    <span>Property Address</span>
-                    <Info className="ml-1 h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{item.name}</span>
                   </div>
-                  <Input placeholder="Type here..." />
-                </div>
-
-                <div className="grid border px-4 py-2 rounded-lg bg-white grid-cols-[200px_1fr] gap-4">
-                  <div className="flex items-center">
-                    <span>Material Style</span>
-                  </div>
-                  <Select defaultValue="1078 Maplewood Avenue">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1078 Maplewood Avenue">
-                        1078 Maplewood Avenue
-                      </SelectItem>
-                      <SelectItem value="option2">Option 2</SelectItem>
-                      <SelectItem value="option3">Option 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid border px-4 py-2 rounded-lg bg-white grid-cols-[200px_1fr] gap-4">
-                  <div className="flex items-center">
-                    <span>Full Bathrooms</span>
-                  </div>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select option here" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid border px-4 py-2 rounded-lg bg-white grid-cols-[200px_1fr] gap-4">
-                  <div className="flex items-center">
-                    <span>Half Bathrooms</span>
-                  </div>
-                  <Select defaultValue="1078 Maplewood Avenue">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="1078 Maplewood Avenue">
-                        1078 Maplewood Avenue
-                      </SelectItem>
-                      <SelectItem value="option2">Option 2</SelectItem>
-                      <SelectItem value="option3">Option 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid border px-4 py-2 rounded-lg bg-white grid-cols-[200px_1fr] gap-4">
-                  <div className="flex items-center">
-                    <span>No. of Living Rooms</span>
-                  </div>
-                  <Input value="1078 Maplewood Avenue" readOnly />
-                </div>
+                  {expandedSections[idx] ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </button>
+                {expandedSections[idx] &&
+                  questions &&
+                  questions.length > 0 &&
+                  questions.map((question: any, index: number) => {
+                    const answer =
+                      answerList.find(
+                        (answer) => answer.questionId === question.id
+                      )?.answer || "";
+                    return (
+                      <div
+                        key={index}
+                        className="w-full h-12 py-1 flex items-center rounded-lg bg-white border"
+                      >
+                        <p className="w-fit px-5 text-sm text-[#4D4D4D]">
+                          {question.question}
+                        </p>
+                        <div className="w-full flex justify-end flex-1">
+                          {question.type === "options" && (
+                            <Select
+                              value={answer}
+                              onValueChange={(value: string) => {
+                                updateAnswer(question.id, value);
+                              }}
+                            >
+                              <SelectTrigger className="max-w-[400px] bg-transparent border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
+                                <SelectValue placeholder="Select an answer" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                {question.answer &&
+                                  question.answer.length > 0 &&
+                                  question.answer.map(
+                                    (answer: any, idx: number) => {
+                                      return (
+                                        <SelectItem
+                                          key={idx}
+                                          value={answer.id}
+                                          className="hover:bg-gray-300"
+                                        >
+                                          {answer.text}
+                                        </SelectItem>
+                                      );
+                                    }
+                                  )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {question.type === "number" && (
+                            <Input
+                              type="number"
+                              value={answer}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => {
+                                const value = e.target.value;
+                                if (!isNaN(Number(value)) || value === "") {
+                                  updateAnswer(question.id, value);
+                                }
+                              }}
+                              placeholder="Type here ..."
+                              className="max-w-[400px] border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
-            )}
-          </div>
-
-          <div className="border rounded-md">
-            <button
-              className="w-full flex justify-between items-center p-4"
-              onClick={() => toggleSection("kitchen")}
-            >
-              <div className="flex items-center">
-                <span className="mr-2 h-5 w-5 flex items-center justify-center">
-                  🍳
-                </span>
-                <span className="font-medium">Kitchen</span>
-              </div>
-              {expandedSections.kitchen ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.kitchen && <div className="p-4 pt-0"></div>}
-          </div>
-
-          <div className="border rounded-md">
-            <button
-              className="w-full flex justify-between items-center p-4"
-              onClick={() => toggleSection("fullBathroom")}
-            >
-              <div className="flex items-center">
-                <Bath className="mr-2 h-5 w-5" />
-                <span className="font-medium">Full Bathroom 1</span>
-              </div>
-              {expandedSections.fullBathroom ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.fullBathroom && <div className="p-4 pt-0"></div>}
-          </div>
-
-          <div className="border rounded-md">
-            <button
-              className="w-full flex justify-between items-center p-4"
-              onClick={() => toggleSection("halfBathroom")}
-            >
-              <div className="flex items-center">
-                <BathShower className="mr-2 h-5 w-5" />
-                <span className="font-medium">Half Bathroom 1</span>
-              </div>
-              {expandedSections.halfBathroom ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.halfBathroom && <div className="p-4 pt-0"></div>}
-          </div>
-
-          <div className="border rounded-md">
-            <button
-              className="w-full flex justify-between items-center p-4"
-              onClick={() => toggleSection("masterBedroom")}
-            >
-              <div className="flex items-center">
-                <Bed className="mr-2 h-5 w-5" />
-                <span className="font-medium">Master Bedroom</span>
-              </div>
-              {expandedSections.masterBedroom ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.masterBedroom && <div className="p-4 pt-0"></div>}
-          </div>
-
-          <div className="border rounded-md">
-            <button
-              className="w-full flex justify-between items-center p-4"
-              onClick={() => toggleSection("interiorDoors")}
-            >
-              <div className="flex items-center">
-                <DoorClosed className="mr-2 h-5 w-5" />
-                <span className="font-medium">Interior Doors</span>
-              </div>
-              {expandedSections.interiorDoors ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </button>
-
-            {expandedSections.interiorDoors && <div className="p-4 pt-0"></div>}
-          </div>
-
-          <div className="mt-10">
-            <Button
-              onClick={handleGototNextStep}
-              className="bg-[#2365C8] text-white hover:bg-blue-700"
-            >
-              Proceed to Step 2
-            </Button>
-          </div>
-        </div>
+            );
+          })}
+      </div>
+      <div className="flex gap-4 pt-4">
+        <Button disabled className="bg-[#2365C8] text-white hover:bg-blue-700">
+          Previous Step
+        </Button>
+        <Button
+          onClick={handleGotoNextStep}
+          className="bg-[#2365C8] text-white hover:bg-blue-700"
+        >
+          Next Step
+        </Button>
       </div>
     </div>
   );

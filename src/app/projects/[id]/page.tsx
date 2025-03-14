@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
@@ -17,6 +16,8 @@ import MaterialInputTab from "@/src/components/tabs/material-input";
 import MaterialOutputTab from "@/src/components/tabs/material-output";
 import DesignGuideTab from "@/src/components/tabs/design-guide";
 import FinancialTab from "@/src/components/tabs/financial";
+import { useAtom } from "jotai";
+import { projectAtom } from "@/src/atoms/projectAtom";
 
 const tabValues = [
   "materialInput",
@@ -40,7 +41,7 @@ const tabComponents = [
 export default function ProjectDetailPage() {
   const { toast } = useToast();
   const pathName = usePathname();
-  const [project, setProject] = useState<any | null>(null);
+  const [projectData, setProjectData] = useAtom(projectAtom);
   const [currentTab, setCurrentTab] = useState(tabValues[0]);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function ProjectDetailPage() {
         .select("*")
         .eq("id", id);
       if (error) throw error;
-      setProject(data[0]);
+      setProjectData({ ...projectData, selectedItem: data[0] });
     } catch (error) {
       toast({
         title: "A network error occurred",
@@ -75,9 +76,11 @@ export default function ProjectDetailPage() {
       <main className="flex-1 overflow-y-auto">
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-5 border-b-2 pb-4">
-            <h1 className="text-3xl font-bold">{project && project.name}</h1>
+            <h1 className="text-3xl font-bold">
+              {projectData.selectedItem && projectData.selectedItem.name}
+            </h1>
           </div>
-          <div className="w-full">
+          <div className="w-full pb-6">
             <Tabs value={currentTab} onValueChange={handleChangeTab}>
               <TabsList className="mb-6">
                 {tabValues.map((item, idx) => {

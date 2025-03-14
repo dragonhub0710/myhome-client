@@ -18,6 +18,18 @@ const passwordSchema = z
     "Password must contain at least one special character"
   );
 
+// Common number input validation
+const numberSchema = z
+  .string()
+  .min(1, "This are required")
+  .refine((val) => /^\d+$/.test(val), {
+    message: "This must be a valid number",
+  })
+  .transform((val) => parseInt(val, 10))
+  .refine((val) => val >= 0, {
+    message: "This must be a non-negative integer",
+  });
+
 // User creation schema
 export const insertUserSchema = z.object({
   firstName: requiredSchema,
@@ -48,46 +60,10 @@ export const signinSchema = z.object({
 
 export const createProjectSchema = z.object({
   name: requiredSchema,
-  fullBathrooms: z
-    .string()
-    .min(1, "Full Bathrooms are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Full bathrooms must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Full bathrooms must be a non-negative integer",
-    }),
-  halfBathrooms: z
-    .string()
-    .min(1, "Half Bathrooms are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Half bathrooms must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Half bathrooms must be a non-negative integer",
-    }),
-  livingRooms: z
-    .string()
-    .min(1, "Living rooms are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Living rooms must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Living rooms must be a non-negative integer",
-    }),
-  squareFeet: z
-    .string()
-    .min(1, "Square feet is required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Square feet must be a valid number",
-    })
-    .refine((val) => val > 0, {
-      message: "Square feet must be a positive integer",
-    }),
+  fullBathrooms: numberSchema,
+  halfBathrooms: numberSchema,
+  livingRooms: numberSchema,
+  squareFeet: numberSchema,
 });
 
 export type CreateProject = z.infer<typeof createProjectSchema>;
@@ -105,76 +81,13 @@ export const resetPasswordSchema = z
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 
 export const assumptionSheetSchema = z.object({
-  vendorWindows: z
-    .string()
-    .min(1, "Windows are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Windows must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Windows must be a non-negative integer",
-    }),
-  vendorLVP: z
-    .string()
-    .min(1, "LVP is required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "LVP must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "LVP must be a non-negative integer",
-    }),
-  vendorStairTreads: z
-    .string()
-    .min(1, "Stair Treads are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Stair Treads must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Stair Treads must be a non-negative integer",
-    }),
-  vendorDoors: z
-    .string()
-    .min(1, "Interior Doors are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Interior Doors must be a valid number",
-    })
-    .refine((val) => val > 0, {
-      message: "Interior Doors must be a positive integer",
-    }),
-  vendorCabinets: z
-    .string()
-    .min(1, "Cabinets are required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Cabinets must be a valid number",
-    })
-    .refine((val) => val >= 0, {
-      message: "Cabinets must be a non-negative integer",
-    }),
-  materialTile: z
-    .string()
-    .min(1, "Tile is required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "Tile must be a valid number",
-    })
-    .refine((val) => val > 0, {
-      message: "Tile must be a positive integer",
-    }),
-  materialLVP: z
-    .string()
-    .min(1, "LVP is required")
-    .transform((val) => parseInt(val, 10))
-    .refine((val) => !isNaN(val), {
-      message: "LVP must be a valid number",
-    })
-    .refine((val) => val > 0, {
-      message: "LVP must be a positive integer",
-    }),
+  vendorWindows: numberSchema,
+  vendorLVP: numberSchema,
+  vendorStairTreads: numberSchema,
+  vendorDoors: numberSchema,
+  vendorCabinets: numberSchema,
+  materialTile: numberSchema,
+  materialLVP: numberSchema,
 });
 
 export type AssumptionSheet = z.infer<typeof assumptionSheetSchema>;

@@ -1,16 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { atom } from "jotai";
 
-interface ProjectState {
+interface DesignThemeState {
   list: any;
   selectedItem: any;
-  sortField: string;
-  sortDirection: boolean;
 }
 
-export const projectAtom = atom<ProjectState>({
+export const designThemeAtom = atom<DesignThemeState>({
   list: null,
   selectedItem: null,
-  sortField: "",
-  sortDirection: true,
 });

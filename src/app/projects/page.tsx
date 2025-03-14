@@ -83,6 +83,7 @@ export default function HomePage() {
       if (data) {
         setProjectList({
           list: data,
+          selectedItem: null,
           sortField: sort,
           sortDirection: direction,
         });
@@ -217,7 +218,11 @@ export default function HomePage() {
               projectList.list &&
               projectList.list.length > 0 &&
               projectList.list.map((item: any, idx: number) => {
-                return <ProjectCard data={item} key={idx} />;
+                return (
+                  <a key={idx} href={`/projects/${item.id}`}>
+                    <ProjectCard data={item} />
+                  </a>
+                );
               })
             )}
           </div>

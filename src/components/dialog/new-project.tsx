@@ -64,10 +64,8 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
           half_bathrooms: project.halfBathrooms,
           living_rooms: project.livingRooms,
           square_feet: project.squareFeet,
-          status: false,
-          input_form: false,
-          phase1: false,
-          phase2: false,
+          design_theme: null,
+          room_upgrade: null,
         });
 
       if (createError) {
@@ -88,11 +86,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
         });
       if (error) throw error;
 
-      setProjectList({
-        list: rows,
-        sortField: projectList.sortField,
-        sortDirection: projectList.sortDirection,
-      });
+      setProjectList({ ...projectList, list: rows });
       setOpen(false);
     } catch (error) {
       toast({

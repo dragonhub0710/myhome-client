@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { LogOut, User } from "lucide-react";
+import { Folder, HardDrive, Home, LogOut, Settings, User } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { authAtom } from "@/src/atoms/authAtom";
 import { supabase } from "@/src/lib/supabase";
@@ -15,10 +15,10 @@ import {
 import { Button } from "@/src/components/ui/button";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: "/svg/dashboard.svg" },
-  { name: "Projects", href: "/projects", icon: "/svg/project.svg" },
-  { name: "Settings", href: "/settings", icon: "/svg/settings.svg" },
-  { name: "Deliveries", href: "/deliveries", icon: "/svg/deliveries.svg" },
+  { name: "Dashboard", href: "/", icon: <Home /> },
+  { name: "Projects", href: "/projects", icon: <Folder /> },
+  { name: "Settings", href: "/settings", icon: <Settings /> },
+  { name: "Deliveries", href: "/deliveries", icon: <HardDrive /> },
 ];
 
 export function MainSidebar() {
@@ -60,7 +60,7 @@ export function MainSidebar() {
                       "bg-[#2365C8] rounded-full text-white"
                   )}
                 >
-                  <Image alt="" src={item.icon} width={18} height={18} />
+                  {item.icon}
                   {item.name}
                 </Button>
               </Link>

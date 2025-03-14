@@ -124,7 +124,7 @@ export default function ProfileTab() {
       return;
     }
 
-    const filePath = `/images/${file.name}`;
+    const filePath = `${Date.now()}-${file.name}`;
     const { data, error } = await supabase.storage
       .from("images")
       .upload(filePath, file, {

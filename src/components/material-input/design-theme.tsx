@@ -1,6 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+import { supabase } from "@/src/lib/supabase";
+import { designThemeAtom } from "@/src/atoms/themeAtom";
+import { projectAtom } from "@/src/atoms/projectAtom";
+import { useToast } from "@/src/hooks/use-toast";
 import { Button } from "@/src/components/ui/button";
-import { ThemeCard } from "./theme-card";
+import Loading_Animation from "@/src/components/loading/light_loading.json";
+
+const DynamicLottie = dynamic(() => import("react-lottie"), {
+  ssr: false,
+});
 
 type MaterialInputProps = {
   currentStep: number;
@@ -11,79 +23,142 @@ export function DesignTheme({
   currentStep,
   setCurrentStep,
 }: MaterialInputProps) {
+  const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const projectData = useAtomValue(projectAtom);
+  const [designThemeData, setDesignThemeData] = useAtom(designThemeAtom);
+  const [themeIndex, setThemeIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const LoadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading_Animation,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   useEffect(() => {
-    if (containerRef.current) {
-      setContainerHeight(containerRef.current.clientHeight);
+    if (designThemeData.list && designThemeData.list.length > 0) {
+      designThemeData.list.map((item: any, idx: number) => {
+        if (item.id === projectData.selectedItem.design_theme) {
+          setThemeIndex(idx);
+        }
+      });
     }
-  }, []);
+  }, [designThemeData, projectData]);
 
-  const handleGototNextStep = () => {
+  const handleGotoPrevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleGotoNextStep = () => {
     setCurrentStep(currentStep + 1);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!designThemeData.list || designThemeData.list.length === 0) return;
+
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("projects")
+        .update({ design_theme: designThemeData.list[themeIndex].id })
+        .eq("id", projectData.selectedItem.id);
+      if (error) throw error;
+      if (data) {
+        setDesignThemeData({
+          ...designThemeData,
+          selectedItem: designThemeData.list[themeIndex],
+        });
+      }
+    } catch (err) {
+      console.error("Error saving theme:", err);
+      toast({
+        title: "Error saving theme.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div ref={containerRef} className="w-full">
-      <div className="relative pr-[136px]">
-        <div className="flex justify-between items-center p-10 pb-0">
+      <div className="relative px-10 py-6 space-y-4">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-semibold">Input Form</h1>
+            <h1 className="text-2xl font-semibold">Design Themes</h1>
             <p className="text-sm text-muted-foreground">STEP 2/3</p>
           </div>
-          <Button className="bg-[#2365C8] text-white hover:bg-blue-700">
-            Save Changes
+          <Button
+            onClick={handleSaveChanges}
+            className="w-36 bg-[#2365C8] text-white hover:bg-blue-700"
+          >
+            {isLoading ? (
+              <div className="w-12 h-12">
+                <DynamicLottie
+                  options={LoadingOptions}
+                  isClickToPauseDisabled={true}
+                />
+              </div>
+            ) : (
+              <p>Save Changes</p>
+            )}
           </Button>
         </div>
 
-        <div className="absolute right-6 top-24 bottom-6">
-          <div className="w-[136px] flex flex-col items-center">
-            <div className="w-full flex items-center justify-end">
-              <div
-                className="w-1 bg-gray-200 rounded-full mt-4"
-                style={{ height: `${containerHeight / 4}px` }}
-              ></div>
-            </div>
-            <div className="w-full flex items-center justify-end">
-              <div className="mt-[-6px] px-5 text-sm text-blue-500">
-                STEP 2 / 3
-              </div>
-              <div
-                className="w-1 bg-blue-500 rounded-full justify-end flex items-center relative"
-                style={{ height: `${containerHeight / 4 - 4}px` }}
-              >
-                <div className="absolute left-1/2 transform -translate-x-1/2 -mt-2">
-                  <div className="bg-white rounded-full p-2 border border-blue-500">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <div className="w-full relative space-y-2">
+          <div className="flex space-x-5">
+            {designThemeData.list &&
+              designThemeData.list.length > 0 &&
+              designThemeData.list.map((item: any, idx: number) => {
+                const isSelected = themeIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`w-[190px] h-auto cursor-default relative space-y-2`}
+                    onClick={() => setThemeIndex(idx)}
+                  >
+                    <div
+                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl hover:border-[#2365C8]  ${
+                        isSelected
+                          ? "border-[#2365C8] border-2"
+                          : "border-transparent"
+                      }`}
+                    >
+                      <Image
+                        alt="theme"
+                        src={item.image ? item.image : "/img/card.png"}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute bottom-2 right-2">
+                        <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
+                          $19,000
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-lg font-medium">{item.name}</p>
+                    <p className="text-sm">{item.description}</p>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full flex items-center justify-end">
-              <div
-                className="w-1 bg-gray-200 rounded-full mt-4"
-                style={{ height: `${containerHeight / 4 - 4}px` }}
-              ></div>
-            </div>
+                );
+              })}
           </div>
         </div>
-
-        <div className="p-10 pt-4 relative">
-          <div className="flex space-x-5">
-            <ThemeCard />
-            <ThemeCard />
-            <ThemeCard />
-          </div>
-          <div className="mt-10">
-            <Button
-              onClick={handleGototNextStep}
-              className="bg-[#2365C8] text-white hover:bg-blue-700"
-            >
-              Proceed to Step 3
-            </Button>
-          </div>
+        <div className="flex gap-4 pt-4">
+          <Button
+            onClick={handleGotoPrevStep}
+            className="bg-[#2365C8] text-white hover:bg-blue-700"
+          >
+            Previous Step
+          </Button>
+          <Button
+            onClick={handleGotoNextStep}
+            className="bg-[#2365C8] text-white hover:bg-blue-700"
+          >
+            Next Step
+          </Button>
         </div>
       </div>
     </div>

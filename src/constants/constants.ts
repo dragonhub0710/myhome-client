@@ -1,0 +1,14 @@
+export const HIGH_LEVEL_LABEL = "High";
+export const HIGH_LEVEL_VALUE = "high";
+export const MEDIUM_LEVEL_LABEL = "Medium";
+export const MEDIUM_LEVEL_VALUE = "medium";
+export const LOW_LEVEL_LABEL = "Low";
+export const LOW_LEVEL_VALUE = "low";
+export const STATUS_INCOMPLETE_VALUE = "incomplete";
+export const STATUS_INCOMPLETE_LABEL = "INCOMPLETE";
+export const STATUS_READY_VALUE = "ready";
+export const STATUS_READY_LABEL = "READY TO ORDER";
+export const STATUS_ORDERED_VALUE = "ordered";
+export const STATUS_ORDERED_LABEL = "ORDERED";
+export const PHASE_1 = "1";
+export const PHASE_2 = "2";
