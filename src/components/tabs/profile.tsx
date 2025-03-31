@@ -6,7 +6,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useAtom } from "jotai";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRight, Lock, User } from "lucide-react";
+import { ChevronRight, Lock, XIcon } from "lucide-react";
 import { UpdateUser, updateUserSchema } from "@/src/schema/schema";
 import { supabase } from "@/src/lib/supabase";
 import { useToast } from "@/src/hooks/use-toast";
@@ -82,6 +82,10 @@ export default function ProfileTab() {
   const handleUpdateProfile = async (user: UpdateUser) => {
     setIsLoading(true);
     try {
+      if (auth.user.avatar) {
+        await removeImage(auth.user.avatar);
+      }
+
       const imgLink = await uploadImage();
 
       const { data, error } = await supabase.auth.updateUser({
@@ -152,6 +156,18 @@ export default function ProfileTab() {
     }
   };
 
+  const removeImage = async (fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("images")
+        .remove([fileName]);
+      if (error) throw error;
+      if (data) return;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   const handleCancelSetting = () => {
     form.reset({
       firstName: auth.user.first_name,
@@ -160,6 +176,11 @@ export default function ProfileTab() {
     });
     setImageUrl(auth.user.avatar);
     setIsEditable(false);
+  };
+
+  const removeImageChange = () => {
+    setImageUrl("");
+    setFile(null);
   };
 
   return (
@@ -180,8 +201,10 @@ export default function ProfileTab() {
                   className="rounded-full"
                 />
               ) : (
-                <div className="rounded-full w-[100px] h-[100px] flex items-center justify-center bg-[#2365C8]">
-                  <User className="w-16 h-16 text-white" />
+                <div className="rounded-full w-[100px] h-[100px] flex items-center justify-center bg-primary">
+                  <p className="text-6xl font-sans text-white">
+                    {auth.user.first_name && auth.user.first_name[0]}
+                  </p>
                 </div>
               )}
               {isEditable && (
@@ -194,6 +217,14 @@ export default function ProfileTab() {
                     className="invisible w-0 h-0" // Make the input invisible
                   />
                 </label>
+              )}
+              {isEditable && (
+                <div
+                  onClick={removeImageChange}
+                  className="absolute cursor-pointer text-white text-base top-0 right-0 w-fit h-hit opacity-50 hover:opacity-100 hover:bg-black rounded-full transition-opacity duration-300 bg-[gray]"
+                >
+                  <XIcon className="text-secondary" />
+                </div>
               )}
             </div>
             <div className="flex-1 flex space-x-2 w-full">
@@ -209,7 +240,7 @@ export default function ProfileTab() {
                   />
                 )}
                 {form.formState.errors.firstName && (
-                  <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                  <p className="text-sm mt-[4px] text-secondary text-destructive">
                     {form.formState.errors.firstName.message}
                   </p>
                 )}
@@ -226,7 +257,7 @@ export default function ProfileTab() {
                   />
                 )}
                 {form.formState.errors.lastName && (
-                  <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                  <p className="text-sm mt-[4px] text-secondary text-destructive">
                     {form.formState.errors.lastName.message}
                   </p>
                 )}
@@ -245,7 +276,7 @@ export default function ProfileTab() {
               />
             )}
             {form.formState.errors.email && (
-              <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+              <p className="text-sm mt-[4px] text-secondary text-destructive">
                 {form.formState.errors.email.message}
               </p>
             )}
@@ -254,10 +285,10 @@ export default function ProfileTab() {
             <DialogTrigger asChild>
               <Button
                 disabled={!isEditable}
-                className="flex h-12 hover:shadow items-center rounded-lg cursor-pointer w-full px-4 py-0 justify-between border-[1px]"
+                className="flex bg-transparent hover:text-white h-12 hover:shadow items-center rounded-lg cursor-pointer w-full px-4 py-0 justify-between border-[1px]"
               >
                 <div className="flex space-x-2">
-                  <Lock className="text-[#2365C8] !w-auto !h-6" />
+                  <Lock className="text-primary !w-auto !h-6" />
                   <p className="text-base">Reset Password</p>
                 </div>
                 <ChevronRight />
@@ -282,7 +313,7 @@ export default function ProfileTab() {
                 <Button
                   type="submit"
                   disabled={isloading || !isValid}
-                  className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white"
+                  className="bg-primary rounded-lg h-[42px] w-[192px] text-white"
                 >
                   {isloading ? (
                     <div className="w-16 h-16">
@@ -292,14 +323,14 @@ export default function ProfileTab() {
                       />
                     </div>
                   ) : (
-                    <div className="w-full flex items-center justify-center text-lg">
+                    <div className="w-full flex items-center justify-center text-base">
                       Save
                     </div>
                   )}
                 </Button>
                 <Button
                   onClick={handleCancelSetting}
-                  className="bg-transparent border-[1px] border-[#2365C8] rounded-lg h-[42px] w-[192px] text-[#2365C8] flex items-center justify-center text-lg"
+                  className="bg-transparent border-[1px] border-primary rounded-lg h-[42px] w-[192px] text-primary hover:bg-[#f0f0f0] flex items-center justify-center text-base"
                 >
                   Cancel
                 </Button>
@@ -307,7 +338,7 @@ export default function ProfileTab() {
             ) : (
               <Button
                 onClick={() => setIsEditable(true)}
-                className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white flex items-center justify-center text-lg"
+                className="bg-primary rounded-lg h-[42px] w-[192px] text-white flex items-center justify-center text-lg"
               >
                 Edit
               </Button>

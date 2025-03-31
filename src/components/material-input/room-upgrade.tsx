@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -12,7 +13,8 @@ import { Button } from "@/src/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/src/components/ui/dialog";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
 import { roomUpgradeAtom } from "@/src/atoms/roomupgradeAtom";
-import { RoomCard } from "@/src/components/material-input/room-card";
+import { RoomCard } from "@/src/components/card/room-card";
+import { authAtom } from "@/src/atoms/authAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -29,10 +31,12 @@ export function RoomUpgrade({
 }: MaterialInputProps) {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const projectData = useAtomValue(projectAtom);
+  const auth = useAtomValue(authAtom);
+  const [projectData, setProjectData] = useAtom(projectAtom);
   const [roomUpgradeData, setRoomUpgradeData] = useAtom(roomUpgradeAtom);
   const [open, setOpen] = useState(false);
-  const [upgradeIndex, setUpgradeIndex] = useState(0);
+  const [prevUpgradeIndex, setPrevUpgradeIndex] = useState(0);
+  const [newUpgradeIndex, setNewUpgradeIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const LoadingOptions = {
     loop: true,
@@ -47,7 +51,8 @@ export function RoomUpgrade({
     if (roomUpgradeData.list && roomUpgradeData.list.length > 0) {
       roomUpgradeData.list.map((item: any, idx: number) => {
         if (item.id === projectData.selectedItem.room_upgrade) {
-          setUpgradeIndex(idx);
+          setPrevUpgradeIndex(idx);
+          setNewUpgradeIndex(idx);
         }
       });
     }
@@ -59,25 +64,41 @@ export function RoomUpgrade({
 
   const handleSaveChanges = async () => {
     if (!roomUpgradeData.list || roomUpgradeData.list.length === 0) return;
-
     try {
       setIsLoading(true);
-      const { data: row, error } = await supabase
+      const { data, error: updateError } = await supabase
         .from("projects")
-        .update({ room_upgrade: roomUpgradeData.list[upgradeIndex].id })
+        .update({ room_upgrade: roomUpgradeData.list[newUpgradeIndex].id })
         .eq("id", projectData.selectedItem.id);
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      if (row) {
-        setRoomUpgradeData({
-          ...roomUpgradeData,
-          selectedItem: roomUpgradeData.list[upgradeIndex],
-        });
-      }
+      const { data: selected, error: selectedError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectData.selectedItem.id);
+      if (selectedError) throw selectedError;
+
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", auth.user?.id);
+      if (projectsError) throw projectsError;
+
+      setProjectData({
+        ...projectData,
+        list: projects,
+        selectedItem: selected[0],
+      });
+
+      setRoomUpgradeData({
+        ...roomUpgradeData,
+        selectedItem: roomUpgradeData.list[newUpgradeIndex],
+      });
+      setOpen(false);
     } catch (err) {
-      console.error("Error saving theme:", err);
+      console.error("Error saving:", err);
       toast({
-        title: "Error saving theme.",
+        title: "Error saving.",
         variant: "destructive",
       });
     } finally {
@@ -85,7 +106,7 @@ export function RoomUpgrade({
     }
   };
   const handleSelectRoomUpgrade = async (index: number) => {
-    setUpgradeIndex(index);
+    setNewUpgradeIndex(index);
     setOpen((prev) => !prev);
     const selectedItem = roomUpgradeData.list[index];
     if (!selectedItem || selectedItem.products == 0) {
@@ -100,10 +121,8 @@ export function RoomUpgrade({
     if (error) throw error;
     if (data) {
       const list = data.map((row) => row.name);
-      console.log({ list });
       selectedItem.productsLabel = list.join(", ");
     }
-    setRoomUpgradeData({ ...roomUpgradeData, selectedItem });
   };
 
   return (
@@ -136,7 +155,8 @@ export function RoomUpgrade({
             {roomUpgradeData.list &&
               roomUpgradeData.list.length > 0 &&
               roomUpgradeData.list.map((item: any, idx: number) => {
-                const isSelected = upgradeIndex === idx;
+                const isPrevUpgrade = prevUpgradeIndex === idx;
+                const isSelected = newUpgradeIndex === idx;
                 return (
                   <div
                     key={idx}
@@ -145,7 +165,9 @@ export function RoomUpgrade({
                   >
                     <div
                       className={`relative block w-[190px] h-[254px] overflow-hidden rounded-xl hover:border-[#2365C8]  ${
-                        isSelected
+                        isPrevUpgrade
+                          ? "border-[#2365C8] border-4"
+                          : isSelected
                           ? "border-[#2365C8] border-2"
                           : "border-transparent"
                       }`}
@@ -154,11 +176,11 @@ export function RoomUpgrade({
                         alt="theme"
                         src={item.image ? item.image : "/img/card.png"}
                         fill
-                        className="object-cover"
+                        className="object-cover h-auto w-auto"
                       />
                       <div className="absolute bottom-2 right-2">
                         <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
-                          $19,000
+                          ${item.all_in_price || 0}
                         </div>
                       </div>
                     </div>
@@ -188,7 +210,7 @@ export function RoomUpgrade({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="p-10 max-w-[730px] bg-white">
           <DialogTitle></DialogTitle>
-          <RoomCard data={roomUpgradeData.list[upgradeIndex]} />
+          <RoomCard data={roomUpgradeData.list[newUpgradeIndex]} />
           <div className="w-full flex justify-end">
             <div className="w-[310px]"></div>
             <Button

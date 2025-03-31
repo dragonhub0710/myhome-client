@@ -156,18 +156,42 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       const productList = Object.entries(productQuantities).map(
         ([productId, quantity]) => ({
           product_id: productId,
-          quantity: quantity,
+          quantity,
           phase: "1",
           project_id: projectData.selectedItem.id,
           status: STATUS_INCOMPLETE_VALUE,
         })
       );
       if (productList && productList.length > 0) {
-        productList.map(async (item) => {
-          const { data, error } = await supabase
+        productList.forEach(async (item) => {
+          // Check if the product already exists
+          const { data: existingProduct, error: fetchError } = await supabase
             .from("project_products")
-            .insert(item);
-          if (error) throw error;
+            .select("quantity")
+            .eq("product_id", item.product_id)
+            .eq("project_id", item.project_id)
+            .single();
+
+          if (fetchError) throw fetchError;
+
+          if (existingProduct) {
+            // If the product exists, update its quantity
+            const newQuantity = existingProduct.quantity + item.quantity;
+            const { error: updateError } = await supabase
+              .from("project_products")
+              .update({ quantity: newQuantity })
+              .eq("product_id", item.product_id)
+              .eq("project_id", item.project_id);
+
+            if (updateError) throw updateError;
+          } else {
+            // If the product does not exist, insert it
+            const { error: insertError } = await supabase
+              .from("project_products")
+              .insert(item);
+
+            if (insertError) throw insertError;
+          }
         });
       }
 
@@ -177,7 +201,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         .update({ answers })
         .eq("id", projectData.selectedItem.id);
       if (error) throw error;
-      if (data) return;
+      return;
     } catch (err) {
       console.log(err);
       toast({

@@ -23,8 +23,8 @@ export default function MaterialInputTab() {
   const { toast } = useToast();
   const setHeaders = useAtom(headerAtom)[1];
   const setQuestions = useAtom(questionAtom)[1];
-  const [designTheme, setDesignTheme] = useAtom(designThemeAtom);
-  const [roomUpgrade, setRoomUpgrade] = useAtom(roomUpgradeAtom);
+  const [designThemeData, setDesignThemeData] = useAtom(designThemeAtom);
+  const [roomUpgradeData, setRoomUpgradeData] = useAtom(roomUpgradeAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const LoadingOptions = {
@@ -68,7 +68,7 @@ export default function MaterialInputTab() {
         .order("name", { ascending: true });
       if (error) throw error;
 
-      setDesignTheme({ ...designTheme, list: data });
+      setDesignThemeData({ ...designThemeData, list: data });
     } catch (err) {
       console.log(err);
       toast({
@@ -90,7 +90,7 @@ export default function MaterialInputTab() {
 
       if (error) throw error;
 
-      setRoomUpgrade({ ...roomUpgrade, list: data });
+      setRoomUpgradeData({ ...roomUpgradeData, list: data });
     } catch (err) {
       console.log(err);
       toast({

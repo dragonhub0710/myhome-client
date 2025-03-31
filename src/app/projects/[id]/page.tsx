@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { supabase } from "@/src/lib/supabase";
 import { MainSidebar } from "@/src/components/main-sidebar";
 import {
@@ -18,12 +17,13 @@ import DesignGuideTab from "@/src/components/tabs/design-guide";
 import FinancialTab from "@/src/components/tabs/financial";
 import { useAtom } from "jotai";
 import { projectAtom } from "@/src/atoms/projectAtom";
+import { useRouter } from "next/navigation";
 
 const tabValues = [
-  "materialInput",
-  "materialOutput",
-  "designGuides",
-  "financiala",
+  "material-input",
+  "material-output",
+  "design-guides",
+  "financials",
 ];
 const tabLabels = [
   "Material Input",
@@ -40,13 +40,19 @@ const tabComponents = [
 
 export default function ProjectDetailPage() {
   const { toast } = useToast();
-  const pathName = usePathname();
+  const router = useRouter();
   const [projectData, setProjectData] = useAtom(projectAtom);
   const [currentTab, setCurrentTab] = useState(tabValues[0]);
 
   useEffect(() => {
-    const pathList = pathName.split("/");
-    getProjectById(pathList[2]);
+    const currentUrl = window.location.href;
+    const parsedUrl = new URL(currentUrl);
+    const tabValue = parsedUrl.searchParams.get("tab");
+    if (tabValue && tabValues.includes(tabValue)) {
+      setCurrentTab(tabValue);
+    }
+    const pathList = parsedUrl.pathname.split("/");
+    getProjectById(pathList[pathList.length - 1]);
   }, []);
 
   const getProjectById = async (id: string) => {
@@ -68,21 +74,26 @@ export default function ProjectDetailPage() {
 
   const handleChangeTab = (value: string) => {
     setCurrentTab(value);
+    router.push(`/projects/${projectData.selectedItem.id}?tab=${value}`);
   };
 
   return (
     <div className="flex h-screen">
       <MainSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="p-8 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-5 border-b-2 pb-4">
+        <div className="p-8 h-full flex flex-col overflow-auto">
+          <div className="flex items-center justify-between border-b-2 pb-5">
             <h1 className="text-3xl font-bold">
               {projectData.selectedItem && projectData.selectedItem.name}
             </h1>
           </div>
-          <div className="w-full pb-6">
-            <Tabs value={currentTab} onValueChange={handleChangeTab}>
-              <TabsList className="mb-6">
+          <div className="w-full flex-1 pt-5 overflow-auto">
+            <Tabs
+              value={currentTab}
+              onValueChange={handleChangeTab}
+              className="h-full flex flex-col"
+            >
+              <TabsList className="mb-6 justify-start">
                 {tabValues.map((item, idx) => {
                   return (
                     <TabsTrigger
@@ -101,7 +112,11 @@ export default function ProjectDetailPage() {
               </TabsList>
               {tabComponents.map((item, idx) => {
                 return (
-                  <TabsContent key={idx} value={tabValues[idx]}>
+                  <TabsContent
+                    key={idx}
+                    value={tabValues[idx]}
+                    className="flex-1 overflow-auto"
+                  >
                     {item}
                   </TabsContent>
                 );

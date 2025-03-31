@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { MainSidebar } from "@/src/components/main-sidebar";
 import AssumptionTab from "@/src/components/tabs/assumption";
 import IntegrationTab from "@/src/components/tabs/integration";
@@ -10,7 +11,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/src/components/ui/tabs";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const tabValues = ["profile", "assumption", "integrations"];
 const tabLabels = ["Profile", "Assumption Sheet", "Integrations"];
@@ -21,10 +22,21 @@ const tabComponents = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [currentTab, setCurrentTab] = useState(tabValues[0]);
+
+  useEffect(() => {
+    const currentUrl = window.location.href;
+    const parsedUrl = new URL(currentUrl);
+    const tabValue = parsedUrl.searchParams.get("tab");
+    if (tabValue && tabValues.includes(tabValue)) {
+      setCurrentTab(tabValue);
+    }
+  }, []);
 
   const handleChangeTab = (value: string) => {
     setCurrentTab(value);
+    router.push(`/settings?tab=${value}`);
   };
 
   return (

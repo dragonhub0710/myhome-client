@@ -25,7 +25,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
-import { ProjectCard } from "@/src/components/project-card";
+import { ProjectCard } from "@/src/components/card/project-card";
 import NewProjectContent from "@/src/components/dialog/new-project";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
 

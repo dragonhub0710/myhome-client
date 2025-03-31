@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
@@ -9,6 +11,8 @@ import { projectAtom } from "@/src/atoms/projectAtom";
 import { useToast } from "@/src/hooks/use-toast";
 import { Button } from "@/src/components/ui/button";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
+import { roomUpgradeAtom } from "@/src/atoms/roomupgradeAtom";
+import { authAtom } from "@/src/atoms/authAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -25,10 +29,14 @@ export function DesignTheme({
 }: MaterialInputProps) {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const projectData = useAtomValue(projectAtom);
+  const auth = useAtomValue(authAtom);
+  const [projectData, setProjectData] = useAtom(projectAtom);
+  const [roomUpgradeData, setRoomUpgradeData] = useAtom(roomUpgradeAtom);
   const [designThemeData, setDesignThemeData] = useAtom(designThemeAtom);
-  const [themeIndex, setThemeIndex] = useState(0);
+  const [prevThemeIndex, setPrevThemeIndex] = useState(0);
+  const [newThemeIndex, setNewThemeIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [priceList, setPriceList] = useState<number[]>([]);
   const LoadingOptions = {
     loop: true,
     autoplay: true,
@@ -40,13 +48,49 @@ export function DesignTheme({
 
   useEffect(() => {
     if (designThemeData.list && designThemeData.list.length > 0) {
+    }
+  }, [designThemeData, projectData]);
+
+  useEffect(() => {
+    if (designThemeData.list && designThemeData.list.length > 0) {
+      getDesignThemePrices();
       designThemeData.list.map((item: any, idx: number) => {
         if (item.id === projectData.selectedItem.design_theme) {
-          setThemeIndex(idx);
+          setPrevThemeIndex(idx);
+          setNewThemeIndex(idx);
         }
       });
     }
   }, [designThemeData, projectData]);
+
+  const getDesignThemePrices = async () => {
+    const promises = designThemeData.list.map(async (item: any) => {
+      const themeArrayString = JSON.stringify([item.id]);
+      const { data, error } = await supabase
+        .from("products")
+        .select("price, quantity")
+        .filter("themes", "cs", themeArrayString);
+      if (error) throw error;
+
+      let totalPrice = 0;
+
+      if (data && data.length > 0) {
+        for (const product of data) {
+          const price = product.price || 0;
+          const quantity = product.quantity || 0;
+          totalPrice += price * quantity;
+        }
+      }
+      return totalPrice;
+    });
+
+    try {
+      const priceList = await Promise.all(promises);
+      setPriceList(priceList);
+    } catch (error) {
+      console.error("Error fetching design theme prices:", error);
+    }
+  };
 
   const handleGotoPrevStep = () => {
     setCurrentStep(currentStep - 1);
@@ -58,20 +102,48 @@ export function DesignTheme({
 
   const handleSaveChanges = async () => {
     if (!designThemeData.list || designThemeData.list.length === 0) return;
-
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error: updateError } = await supabase
         .from("projects")
-        .update({ design_theme: designThemeData.list[themeIndex].id })
+        .update({ design_theme: designThemeData.list[newThemeIndex].id })
         .eq("id", projectData.selectedItem.id);
+      if (updateError) throw updateError;
+
+      const { data: selected, error: selectedError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectData.selectedItem.id);
+      if (selectedError) throw selectedError;
+
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", auth.user?.id);
+      if (projectsError) throw projectsError;
+
+      setProjectData({
+        ...projectData,
+        list: projects,
+        selectedItem: selected[0],
+      });
+
+      setDesignThemeData({
+        ...designThemeData,
+        selectedItem: designThemeData.list[newThemeIndex],
+      });
+
+      const themeArrayString = JSON.stringify([
+        designThemeData.list[newThemeIndex].id,
+      ]);
+      const { data: rows, error } = await supabase
+        .from("upgrades")
+        .select(`*, locations(name)`)
+        .filter("themes", "cs", themeArrayString)
+        .order("name", { ascending: true });
       if (error) throw error;
-      if (data) {
-        setDesignThemeData({
-          ...designThemeData,
-          selectedItem: designThemeData.list[themeIndex],
-        });
-      }
+
+      setRoomUpgradeData({ ...roomUpgradeData, list: rows });
     } catch (err) {
       console.error("Error saving theme:", err);
       toast({
@@ -113,16 +185,19 @@ export function DesignTheme({
             {designThemeData.list &&
               designThemeData.list.length > 0 &&
               designThemeData.list.map((item: any, idx: number) => {
-                const isSelected = themeIndex === idx;
+                const isPrevTheme = prevThemeIndex === idx;
+                const isSelected = newThemeIndex === idx;
                 return (
                   <div
                     key={idx}
                     className={`w-[190px] h-auto cursor-default relative space-y-2`}
-                    onClick={() => setThemeIndex(idx)}
+                    onClick={() => setNewThemeIndex(idx)}
                   >
                     <div
-                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl hover:border-[#2365C8]  ${
-                        isSelected
+                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl ${
+                        isPrevTheme
+                          ? "border-[#2365C8] border-4"
+                          : isSelected
                           ? "border-[#2365C8] border-2"
                           : "border-transparent"
                       }`}
@@ -135,7 +210,7 @@ export function DesignTheme({
                       />
                       <div className="absolute bottom-2 right-2">
                         <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
-                          $19,000
+                          ${priceList[idx] || 0}
                         </div>
                       </div>
                     </div>

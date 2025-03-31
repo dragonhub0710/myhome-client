@@ -5,6 +5,6 @@ interface ProductState {
   list: any;
 }
 
-export const projectAtom = atom<ProductState>({
+export const productAtom = atom<ProductState>({
   list: null,
 });
