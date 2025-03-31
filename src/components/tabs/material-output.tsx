@@ -334,6 +334,7 @@ export default function MaterialOutputTab() {
             if (success + fail == links.length) {
               socket.close();
               setIsCartLoading(false);
+              setCheckboxValues(new Array(productList.length).fill(false));
               toast({
                 title: `${success} products are added successfully into Amazon cart`,
                 variant: "destructive",
