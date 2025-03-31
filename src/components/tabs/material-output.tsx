@@ -401,7 +401,7 @@ export default function MaterialOutputTab() {
                     <Button
                       disabled={movePhaseDisabled}
                       onClick={handleMovePhase}
-                      className="w-full flex justify-between px-4 hover:bg-gray-300"
+                      className="w-full flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       {isPahseLoading ? (
                         <div className="w-full flex items-center justify-center">
@@ -421,7 +421,7 @@ export default function MaterialOutputTab() {
                     <Button
                       disabled={updateStatusDisabled}
                       onClick={() => handleUpdateStatus()}
-                      className="w-full flex justify-between px-4 hover:bg-gray-300"
+                      className="w-full flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       {isStatusLoading ? (
                         <div className="w-full flex items-center justify-center">
@@ -447,19 +447,19 @@ export default function MaterialOutputTab() {
                   <DropdownMenuContent className="bg-white">
                     <Button
                       onClick={() => exportToExcel(AMAZON_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       {AMAZON_WEBSITE_LABEL}
                     </Button>
                     <Button
                       onClick={() => exportToExcel(LOWES_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       {LOWES_WEBSITE_LABEL}
                     </Button>
                     <Button
                       onClick={() => exportToExcel(HOMEDEPOT_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       {HOMEDEPOT_WEBSITE_LABEL}
                     </Button>
@@ -467,7 +467,7 @@ export default function MaterialOutputTab() {
                 </DropdownMenuPortal>
               </DropdownMenu>
               <DropdownMenu>
-                <DropdownMenuTrigger className="w-24 flex items-center bg-[#2365C8] text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
+                <DropdownMenuTrigger className="w-24 flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
                   Add to
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
@@ -475,7 +475,7 @@ export default function MaterialOutputTab() {
                     <Button
                       disabled={isCartLoading}
                       onClick={handleAddtoCart}
-                      className="w-48 flex justify-between px-4 hover:bg-gray-300"
+                      className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       <p>{AMAZON_WEBSITE_LABEL} Cart</p>
                       {isCartLoading && (
@@ -487,10 +487,10 @@ export default function MaterialOutputTab() {
                         </div>
                       )}
                     </Button>
-                    <Button className="w-48 flex justify-between px-4 hover:bg-gray-300">
+                    <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
                       {LOWES_WEBSITE_LABEL} Cart
                     </Button>
-                    <Button className="w-48 flex justify-between px-4 hover:bg-gray-300">
+                    <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
                       {HOMEDEPOT_WEBSITE_LABEL} Cart
                     </Button>
                     {isCartLoading && (
@@ -595,7 +595,7 @@ export default function MaterialOutputTab() {
                                     height={40}
                                   />
                                 ) : (
-                                  <div className="rounded min-w-10 w-10 h-10 flex items-center justify-center bg-[#2365C8]">
+                                  <div className="rounded min-w-10 w-10 h-10 flex items-center justify-center bg-primary">
                                     <Store className="w-8 h-8 text-white" />
                                   </div>
                                 )}
@@ -640,7 +640,7 @@ export default function MaterialOutputTab() {
                                 </SelectItem>
                                 <SelectItem
                                   value={STATUS_READY_VALUE}
-                                  className="cursor-pointer text-[#2365C8] hover:bg-gray-300"
+                                  className="cursor-pointer text-primary hover:bg-gray-300"
                                 >
                                   {STATUS_READY_LABEL}
                                 </SelectItem>
@@ -656,13 +656,15 @@ export default function MaterialOutputTab() {
                           <TableCell>{item.products.lead_time}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>
-                            {item.quantity * item.products.price}
+                            {(
+                              item.quantity * (item.products.price || 0)
+                            ).toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <a
                               href={item.products.link || ""}
                               target="_blank"
-                              className="cursor-pointer underline text-[#2365C8]"
+                              className="cursor-pointer underline text-primary"
                             >
                               Website Link
                             </a>
@@ -675,7 +677,7 @@ export default function MaterialOutputTab() {
                               <DropdownMenuTrigger
                                 onClick={() => toggleDropdown(item.id)}
                               >
-                                <Trash2 className="text-[#EA2D38] w-5 h-5" />
+                                <Trash2 className="text-secondary w-5 h-5" />
                               </DropdownMenuTrigger>
                               <DropdownMenuPortal>
                                 <DropdownMenuContent
@@ -700,7 +702,7 @@ export default function MaterialOutputTab() {
                                     </div>
                                     <div
                                       onClick={() => toggleDropdown(item.id)}
-                                      className="bg-[#EA2D38] text-white cursor-pointer py-1 px-3 rounded text-sm"
+                                      className="bg-secondary text-white cursor-pointer py-1 px-3 rounded text-sm"
                                     >
                                       No
                                     </div>
@@ -730,7 +732,7 @@ export default function MaterialOutputTab() {
                 </p>
                 <Button
                   onClick={() => window.location.reload()}
-                  className="my-6 w-[200px] text-white text-base bg-[#2365C8] rounded-lg"
+                  className="my-6 w-[200px] text-white text-base bg-primary rounded-lg"
                 >
                   Begin Material Input
                 </Button>
