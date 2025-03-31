@@ -203,7 +203,9 @@ export default function ProfileTab() {
               ) : (
                 <div className="rounded-full w-[100px] h-[100px] flex items-center justify-center bg-primary">
                   <p className="text-6xl font-sans text-white">
-                    {auth.user.first_name && auth.user.first_name[0]}
+                    {auth.user &&
+                      auth.user.first_name &&
+                      auth.user.first_name[0]}
                   </p>
                 </div>
               )}
