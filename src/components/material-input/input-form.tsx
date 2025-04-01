@@ -169,14 +169,13 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             .from("project_products")
             .select("quantity")
             .eq("product_id", item.product_id)
-            .eq("project_id", item.project_id)
-            .single();
+            .eq("project_id", item.project_id);
 
           if (fetchError) throw fetchError;
 
           if (existingProduct) {
             // If the product exists, update its quantity
-            const newQuantity = existingProduct.quantity + item.quantity;
+            const newQuantity = existingProduct[0].quantity + item.quantity;
             const { error: updateError } = await supabase
               .from("project_products")
               .update({ quantity: newQuantity })
