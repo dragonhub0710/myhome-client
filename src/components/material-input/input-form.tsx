@@ -173,7 +173,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
 
           if (fetchError) throw fetchError;
 
-          if (existingProduct) {
+          if (existingProduct && existingProduct.length > 0) {
             // If the product exists, update its quantity
             const newQuantity = existingProduct[0].quantity + item.quantity;
             const { error: updateError } = await supabase
