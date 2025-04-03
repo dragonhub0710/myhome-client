@@ -1,16 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import * as XLSX from "xlsx";
 import * as FileSaver from "file-saver";
 import { useAtomValue } from "jotai";
-import { useRouter } from "next/navigation";
-import { authAtom } from "@/src/atoms/authAtom";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { supabase } from "@/src/lib/supabase";
 import { useToast } from "@/src/hooks/use-toast";
@@ -70,26 +65,54 @@ const STATUS_OPTIONS = [
   },
 ];
 
+interface ProductProps {
+  image: string;
+  link: string;
+  lead_time: number;
+  name: string;
+  price: number;
+  categories: { name: string };
+  locations: { name: string };
+  websites: { name: string };
+}
+
+interface ProjectProductProps {
+  id: string;
+  phase: string;
+  product_id: string;
+  project_id: string;
+  quantity: number;
+  status: string;
+  products: ProductProps;
+}
+
+interface ExcelProductProps {
+  No: number;
+  "Product Name": string;
+  Category: string;
+  Location: string;
+  Status: string;
+  Quantity: number;
+  Price: number;
+  "Total Price": number;
+  Image: string;
+  Link: string;
+}
+
 export default function MaterialOutputTab() {
   const { toast } = useToast();
-  const router = useRouter();
-  const userData = useAtomValue(authAtom);
   const projectData = useAtomValue(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isStatusLoading, setIsStatusLoading] = useState(false);
   const [isPahseLoading, setIsPhaseLoading] = useState(false);
-  const [isCartLoading, setIsCartLoading] = useState(false);
   const [phase, setPhase] = useState(PHASE_1);
   const [openMovePhaseMenu, setOpenMovePhaseMenu] = useState(false);
-  const [productList, setProductList] = useState<any[]>([]);
+  const [productList, setProductList] = useState<ProjectProductProps[]>([]);
   const [sortField, setSortField] = useState("products(name)");
   const [sortDirection, setSortDirection] = useState(true);
   const [checkboxValues, setCheckboxValues] = useState<boolean[]>([]);
   const [movePhaseDisabled, setMovePhaseDisabled] = useState(true);
   const [updateStatusDisabled, setUpdateStatusDisabled] = useState(true);
-  const [successCount, setSuccessCount] = useState(0);
-  const [failedCount, setFailedCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [dropdownOpenStates, setDropdownOpenStates] = useState<{
     [key: string]: boolean;
   }>({});
@@ -102,10 +125,6 @@ export default function MaterialOutputTab() {
     },
   };
 
-  useEffect(() => {
-    if (projectData.selectedItem) getAllProjectProducts();
-  }, [phase, sortField, sortDirection, projectData.selectedItem]);
-
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates((prevState) => ({
       ...prevState,
@@ -113,17 +132,18 @@ export default function MaterialOutputTab() {
     }));
   };
 
-  const getAllProjectProducts = async () => {
+  const getAllProjectProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from("project_products")
         .select(
-          `*, products(name, image, price, lead_time, link, websites(name), categories(name), locations(name)), projects(id)`
+          `*, products(name, image, price, lead_time, link, websites(name), categories(name), locations(name))`
         )
         .eq("project_id", projectData.selectedItem.id)
         .eq("phase", phase)
         .order(sortField, { ascending: sortDirection });
+
       if (error) throw error;
       if (data) {
         setProductList(data);
@@ -132,20 +152,26 @@ export default function MaterialOutputTab() {
     } catch (err) {
       console.error(err);
       toast({
-        title: "Something wrong",
+        title: "Something went wrong",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectData.selectedItem, phase, sortField, sortDirection, toast]);
+
+  useEffect(() => {
+    if (projectData.selectedItem) {
+      getAllProjectProducts();
+    }
+  }, [projectData.selectedItem, getAllProjectProducts]);
 
   const handleMovePhase = () => {
     try {
       setIsPhaseLoading(true);
       checkboxValues.map(async (item, index) => {
         if (item) {
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from("project_products")
             .update({
               phase: productList[index].phase === PHASE_1 ? PHASE_2 : PHASE_1,
@@ -184,9 +210,9 @@ export default function MaterialOutputTab() {
   const handleUpdateStatus = () => {
     try {
       setIsStatusLoading(true);
-      checkboxValues.map(async (item: any, idx: number) => {
+      checkboxValues.map(async (item: boolean, idx: number) => {
         if (item) {
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from("project_products")
             .update({
               status: productList[idx].status,
@@ -245,9 +271,9 @@ export default function MaterialOutputTab() {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
     const fileExtension = ".xlsx";
     const filename = `${String(Date.now())}_phase_${phase}`;
-    const amazonList: any[] = [];
-    const lowesList: any[] = [];
-    const homedepotList: any[] = [];
+    const amazonList: ExcelProductProps[] = [];
+    const lowesList: ExcelProductProps[] = [];
+    const homedepotList: ExcelProductProps[] = [];
 
     productList.map((item, idx) => {
       const data = {
@@ -266,8 +292,8 @@ export default function MaterialOutputTab() {
         Quantity: item.quantity || 0,
         Price: item.products.price || 0,
         "Total Price": item.quantity * item.products.price || 0,
-        Image: item.products.image || 0,
-        Link: item.products.link || 0,
+        Image: item.products.image || "",
+        Link: item.products.link || "",
       };
 
       if (item.products.websites.name == AMAZON_WEBSITE_LABEL) {
@@ -280,7 +306,7 @@ export default function MaterialOutputTab() {
         homedepotList.push(data);
       }
     });
-    let outputList: any[] = [];
+    let outputList: ExcelProductProps[] = [];
     if (website === AMAZON_WEBSITE_LABEL) {
       outputList = [...amazonList];
     }
@@ -298,72 +324,28 @@ export default function MaterialOutputTab() {
   };
 
   const handleAddtoCart = async () => {
-    try {
-      if (userData.user && userData.user.amazon_email) {
-        const links: string[] = [];
-
-        checkboxValues.map((item: any, index: number) => {
-          if (
-            item &&
-            productList[index].products.websites.name === AMAZON_WEBSITE_LABEL
-          ) {
-            links.push(productList[index].products.link);
-          }
-        });
-        if (links.length == 0) return;
-        setTotalCount(links.length);
-
-        const data = { cookies: userData.user.amazon_cookies, links };
-
-        const socket = new WebSocket(
-          process.env.NEXT_PUBLIC_WEBSOCKET_URL || ""
-        );
-
-        socket.addEventListener("open", async () => {
-          console.log("WebSocket connection opened");
-          setIsCartLoading(true);
-          socket.send(JSON.stringify({ status: "add_amazon_cart", data }));
-        });
-
-        socket.addEventListener("message", async (event) => {
-          const { success = 0, fail = 0, status } = JSON.parse(event.data);
-          setSuccessCount(success);
-          setFailedCount(fail);
-
-          if (status == "processing_amazon_cart_adding") {
-            if (success + fail == links.length) {
-              socket.close();
-              setIsCartLoading(false);
-              setCheckboxValues(new Array(productList.length).fill(false));
-              toast({
-                title: `${success} products are added successfully into Amazon cart`,
-                variant: "destructive",
-              });
-            }
-          }
-          if (status == "failed_amazon_cart_adding") {
-            socket.close();
-            setIsCartLoading(false);
-            toast({
-              title: "Failed to add the product into Amazon cart",
-              variant: "destructive",
-            });
-          }
-        });
-
-        socket.addEventListener("close", () => {
-          console.log("WebSocket connection closed");
-          setIsCartLoading(false);
-        });
-      } else {
-        router.push("/settings?tab=integrations");
+    let count = 0;
+    let redirectLink = `https://www.amazon.com/gp/aws/cart/add.html?AssociateTag=${process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_TAG}`;
+    checkboxValues.map((item: boolean, index: number) => {
+      if (
+        item &&
+        productList[index].products.websites.name === AMAZON_WEBSITE_LABEL
+      ) {
+        redirectLink += `&ASIN.${count + 1}=${getASINFromURL(
+          productList[index].products.link
+        )}&Quantity.${count + 1}=${productList[index].quantity}`;
+        count++;
       }
-    } catch (err) {
-      throw err;
-    } finally {
-      setIsCartLoading(false);
-    }
+    });
+    window.open(redirectLink, "_blank");
   };
+
+  function getASINFromURL(url: string) {
+    const asinRegex = /(?:dp|gp\/product)\/([A-Z0-9]{10})/;
+    const match = url.match(asinRegex);
+
+    return match ? match[1] : null;
+  }
 
   return (
     <div className="w-full h-full px-4">
@@ -474,19 +456,10 @@ export default function MaterialOutputTab() {
                 <DropdownMenuPortal>
                   <DropdownMenuContent className="bg-white">
                     <Button
-                      disabled={isCartLoading}
                       onClick={handleAddtoCart}
                       className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300"
                     >
                       <p>{AMAZON_WEBSITE_LABEL} Cart</p>
-                      {isCartLoading && (
-                        <div className="w-11 h-11">
-                          <DynamicLottie
-                            options={LoadingOptions}
-                            isClickToPauseDisabled={true}
-                          />
-                        </div>
-                      )}
                     </Button>
                     <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
                       {LOWES_WEBSITE_LABEL} Cart
@@ -494,12 +467,6 @@ export default function MaterialOutputTab() {
                     <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
                       {HOMEDEPOT_WEBSITE_LABEL} Cart
                     </Button>
-                    {isCartLoading && (
-                      <div className="flex space-x-2 text-xs justify-center">
-                        Success: {successCount}/{totalCount}, Failed:{" "}
-                        {failedCount}/{totalCount}
-                      </div>
-                    )}
                   </DropdownMenuContent>
                 </DropdownMenuPortal>
               </DropdownMenu>
