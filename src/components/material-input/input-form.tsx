@@ -5,17 +5,20 @@
    setCurrentStep: (step: number) => void;
  }
 
+import { AssistantPopup } from "@/src/components/assistant/AssistantPopup";
 import { useEffect, useRef, useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/src/hooks/use-toast";
 import { supabase } from "@/src/lib/supabase";
+import { useRouter } from "next/navigation";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { headerAtom } from "@/src/atoms/headerAtom";
 import { questionAtom } from "@/src/atoms/questionAtom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
+import { fetchAssistantKeyMap } from "@/src/lib/fetchQuestionsWithHeaders";
 import {
   Select,
   SelectContent,
@@ -46,6 +49,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const questionData = useAtomValue(questionAtom);
   const setProjectData = useSetAtom(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const [answerList, setAnswerList] = useState<AnswerProps[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedSections, setExpandedSections] = useState<boolean[]>([]);
@@ -58,8 +62,20 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     },
   };
 
+
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [showReview, setShowReview] = useState(false);
+  const [keyToIdMap, setKeyToIdMap] = useState<Record<string, string>>({});
+
+
+  useEffect(() => {
+    async function loadMap() {
+      const { keyToId } = await fetchAssistantKeyMap();
+      setKeyToIdMap(keyToId);
+    }
+    loadMap();
+  }, []);
+
 
   useEffect(() => {
     if (projectData?.selectedItem) {
@@ -87,6 +103,10 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
           return [...prevAnswers, { questionId, answer }];
         }
       });
+    };
+
+  const handleGotoNextStep = () => {
+      setCurrentStep(currentStep + 1);
     };
 
   const toggleSection = (index: number) => {
@@ -302,7 +322,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         <p className="w-1/2 text-sm">{question.question}</p>
         {question.type === "options" ? (
           <Select value={answer} onValueChange={(val) => updateAnswer(question.id, val)}>
-                <SelectTrigger className="w-full bg-white text-black border border-gray-300 shadow-sm">
+            <SelectTrigger className="max-w-[200px] bg-white text-black border border-gray-300 shadow-sm" >
               <SelectValue placeholder="Select an answer" />
             </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-md z-50">
@@ -353,7 +373,21 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                 <span>Save Changes</span>
               )}
             </Button>
+
           </div>
+      <AssistantPopup
+        onSuggestion={(data) => {
+          Object.entries(data).forEach(([key, value]) => {
+            const questionId = keyToIdMap[key] || key; // fallback to raw key if UUID already
+            if (questionId) {
+              updateAnswer(questionId, String(value));
+              console.log(`✅ Updated ${questionId} with value: ${value}`);
+            } else {
+              console.warn(`❌ No question ID found for assistant key: ${key}`);
+            }
+          });
+        }}
+      />
         </div>
       )}
 
@@ -418,21 +452,47 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             );
           })}
 
-          <div className="flex justify-end pt-6">
-            <Button
-              onClick={handleSaveAnswers}
-              className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
-            >
-              {isLoading ? (
-                <div className="w-6 h-6">
-                  <DynamicLottie options={{ loop: true, autoplay: true, animationData: Loading_Animation }} isClickToPauseDisabled={true} />
-                </div>
-              ) : (
-                <span>Save Changes</span>
-              )}
-            </Button>
-          </div>
+        <div className="flex justify-end pt-6 gap-2">
+          <Button
+                     onClick={handleGotoNextStep}
+                     className="bg-[#2365C8] text-white hover:bg-blue-700"
+                   >
+                     Next Step
+                   </Button>
+
+          <AssistantPopup
+            onSuggestion={(data) => {
+              Object.entries(data).forEach(([key, value]) => {
+                const questionId = keyToIdMap[key] || key;
+                if (questionId) {
+                  updateAnswer(questionId, String(value));
+                  console.log(`✅ Updated ${questionId} with value: ${value}`);
+                } else {
+                  console.warn(`❌ No question ID found for assistant key: ${key}`);
+                }
+              });
+            }}
+          />
+
+          <Button
+            onClick={handleSaveAnswers}
+            className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
+          >
+            {isLoading ? (
+              <div className="w-6 h-6">
+                <DynamicLottie
+                  options={LoadingOptions}
+                  isClickToPauseDisabled={true}
+                />
+              </div>
+            ) : (
+              <span>Save Changes</span>
+            )}
+          </Button>
         </div>
+
+        </div>
+
       )}
     </div>
   );

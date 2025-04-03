@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Folder, HardDrive, LogOut, Settings, User } from "lucide-react";
+import { Folder, HardDrive, Home, LogOut, Settings, User, Brain } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { authAtom } from "@/src/atoms/authAtom";
 import { supabase } from "@/src/lib/supabase";
@@ -15,9 +15,11 @@ import {
 import { Button } from "@/src/components/ui/button";
 
 const navigation = [
+  { name: "Dashboard", href: "/", icon: <Home /> },
   { name: "Projects", href: "/projects", icon: <Folder /> },
   { name: "Settings", href: "/settings", icon: <Settings /> },
   { name: "Deliveries", href: "/deliveries", icon: <HardDrive /> },
+  { name: "AI Assistant", href: "/assistant", icon: <Brain />},
 ];
 
 export function MainSidebar() {
@@ -40,12 +42,10 @@ export function MainSidebar() {
 
   return (
     <div className="flex h-full w-60 p-5 bg-sidebar">
-      <div className="flex h-full w-full flex-col p-5 rounded-xl border-[1px] shadow bg-white">
-        <Link href="/">
-          <div className="flex h-16 items-center px-6">
-            <Image alt="Flipit" src="/svg/logo.svg" width={72} height={20} />
-          </div>
-        </Link>
+      <div className="flex h-full w-full flex-col p-5 rounded-xl bg-white">
+        <div className="flex h-16 items-center px-6">
+          <Image alt="Flipit" src="/svg/logo.svg" width={72} height={20} />
+        </div>
 
         <div className="flex flex-1 flex-col gap-1">
           {navigation.map((item) => {
@@ -58,7 +58,7 @@ export function MainSidebar() {
                   className={cn(
                     "w-full justify-start gap-3",
                     currentTab === item.href &&
-                      "bg-primary rounded-full text-white"
+                      "bg-[#2365C8] rounded-full text-white"
                   )}
                 >
                   {item.icon}
@@ -68,11 +68,12 @@ export function MainSidebar() {
             );
           })}
         </div>
+
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="w-full flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full cursor-pointer flex items-center uppercase text-white justify-center text-lg font-bold bg-primary">
+                <div className="w-10 h-10 rounded-full cursor-pointer flex items-center uppercase text-white justify-center text-lg font-bold bg-[#2365C8]">
                   {auth.user?.avatar ? (
                     <Image
                       alt="user"
