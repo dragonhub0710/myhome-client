@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import * as XLSX from "xlsx";
@@ -126,10 +125,6 @@ export default function MaterialOutputTab() {
     },
   };
 
-  useEffect(() => {
-    if (projectData.selectedItem) getAllProjectProducts();
-  }, [phase, sortField, sortDirection, projectData.selectedItem]);
-
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates((prevState) => ({
       ...prevState,
@@ -137,7 +132,7 @@ export default function MaterialOutputTab() {
     }));
   };
 
-  const getAllProjectProducts = async () => {
+  const getAllProjectProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -148,6 +143,7 @@ export default function MaterialOutputTab() {
         .eq("project_id", projectData.selectedItem.id)
         .eq("phase", phase)
         .order(sortField, { ascending: sortDirection });
+
       if (error) throw error;
       if (data) {
         setProductList(data);
@@ -156,13 +152,19 @@ export default function MaterialOutputTab() {
     } catch (err) {
       console.error(err);
       toast({
-        title: "Something wrong",
+        title: "Something went wrong",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectData.selectedItem, phase, sortField, sortDirection, toast]);
+
+  useEffect(() => {
+    if (projectData.selectedItem) {
+      getAllProjectProducts();
+    }
+  }, [projectData.selectedItem, getAllProjectProducts]);
 
   const handleMovePhase = () => {
     try {
