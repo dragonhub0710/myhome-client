@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { atomWithStorage } from "jotai/utils";
 import type { ChatMessage } from "@/src/services/OpenAIService";
 

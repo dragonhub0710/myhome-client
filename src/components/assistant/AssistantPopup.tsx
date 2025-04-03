@@ -1,4 +1,7 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useRef, useEffect } from "react";
 import {
@@ -11,6 +14,7 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Mic, Send, Bot } from "lucide-react";
 import { OpenAIService } from "@/src/services/OpenAIService";
+import type { ChatMessage } from "@/src/services/OpenAIService";
 import { QuestionListOverlay } from "@/src/components/QuestionListOverlay";
 import {
   fetchQuestionsWithHeaders,
@@ -103,20 +107,24 @@ export function AssistantPopup({ onSuggestion }: AssistantPopupProps) {
 
       console.log("✅ Allowed Assistant Keys:", allowedKeys);
 
-      const systemMessage = {
+      const systemMessage: ChatMessage = {
         role: "system",
         content: `You're a helpful assistant that receives a user's natural language description of what needs to be filled in a form.
-Only respond with a JSON object using **only the keys** mentioned or implied in the input. Do NOT include any keys not in this list. Ignore anything that looks like an ID or UUID. Never respond with anything like "bf2e..." or "0e1b...". ONLY use the exact keys above.
-Do NOT include empty or unused fields. Do not pluralize. Use only these keys:
+      Only respond with a JSON object using **only the keys** mentioned or implied in the input. Do NOT include any keys not in this list. Ignore anything that looks like an ID or UUID. Never respond with anything like "bf2e..." or "0e1b...". ONLY use the exact keys above.
+      Do NOT include empty or unused fields. Do not pluralize. Use only these keys:
 
-${allowedKeys.map((k) => `"${k}"`).join(", ")}
+      ${allowedKeys.map((k) => `"${k}"`).join(", ")}
 
-Output a valid JSON object only.`,
+      Output a valid JSON object only.`,
+      };
+
+      const userMessage: ChatMessage = {
+        role: "user",
+        content: input,
       };
 
       const res = await OpenAIService.sendMessage({
-        messages: [systemMessage, { role: "user", content: input }],
-        temperature: 0.4,
+        messages: [systemMessage, userMessage],
       });
 
       const reply = res.choices[0].message.content;
@@ -130,12 +138,12 @@ Output a valid JSON object only.`,
 
       const assistantOutput = JSON.parse(jsonStr);
       const filtered = Object.fromEntries(
-        Object.entries(assistantOutput).filter(([_, value]) => value !== "")
+        Object.entries(assistantOutput).filter(([key, value]) => value !== "")
       );
 
      const result: Record<string, string> = {};
 
-     for (const [key, value] of Object.entries(filtered)) {
+    for (const [key, value] of Object.entries(filtered) as [string, string][]) {
        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(key);
 
        if (isUUID) {

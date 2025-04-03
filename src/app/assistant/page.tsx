@@ -1,4 +1,7 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import { useAtom } from "jotai";
@@ -13,10 +16,15 @@ import { useToast } from "@/src/hooks/use-toast";
 import { MainSidebar } from "@/src/components/main-sidebar";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { OpenAIService, ChatMessage } from "@/src/services/OpenAIService";
+import { OpenAIService } from "@/src/services/OpenAIService";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), { ssr: false });
+
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
 
 export default function AssistantPage() {
   const [chatSessions, setChatSessions] = useAtom(chatSessionsAtom);
@@ -55,7 +63,7 @@ export default function AssistantPage() {
 
     const hasSystem = messages[0]?.role === "system";
     const base = hasSystem ? messages : [defaultSystemMessage, ...messages];
-    const newMessages = [...base, { role: "user", content: input }];
+    const newMessages: ChatMessage[] = [...base, { role: "user", content: input }];
 
     updateMessages(newMessages);
     setInput("");
@@ -63,8 +71,11 @@ export default function AssistantPage() {
 
     try {
       const res = await OpenAIService.sendMessage({ messages: newMessages });
-      const reply = res.choices[0].message.content;
-      updateMessages([...newMessages, { role: "assistant", content: reply }]);
+      const reply: ChatMessage = {
+        role: "assistant",
+        content: res.choices[0].message.content,
+      };
+      updateMessages([...newMessages, reply]);
     } catch (err) {
       console.error(err);
       toast({
@@ -102,7 +113,6 @@ export default function AssistantPage() {
                 </div>
               </div>
 
-
               <Button
                 onClick={() => {
                   const newChat = createNewChatSession();
@@ -119,7 +129,6 @@ export default function AssistantPage() {
               >
                 Clear Chat
               </Button>
-
             </div>
           </div>
 

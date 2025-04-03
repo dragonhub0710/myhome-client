@@ -1,7 +1,12 @@
-// src/lib/openai.service.ts
+// src/services/OpenAIService
+
+export type ChatMessage = {
+role: "user" | "assistant" | "system";
+content: string;
+};
 
 export class OpenAIService {
-    static async sendMessage({ messages }: { messages: ChatMessage[] }) {
+static async sendMessage({ messages }: { messages: ChatMessage[] }) {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

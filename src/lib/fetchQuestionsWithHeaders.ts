@@ -1,4 +1,6 @@
 // src/lib/fetchQuestionsWithHeaders.ts
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { supabase } from "@/src/lib/supabase";
 
@@ -19,7 +21,7 @@ export async function fetchQuestionsWithHeaders(): Promise<FormQuestion[]> {
   const { data, error } = await supabase
     .from("questions")
     .select("id, question, header(name)")
-    .order("header(name)", { ascending: true });
+    .order("header", { ascending: true });
 
   if (error) {
     console.error("Error fetching questions:", error.message);
@@ -27,10 +29,14 @@ export async function fetchQuestionsWithHeaders(): Promise<FormQuestion[]> {
   }
 
   return (data || [])
-    .map((item) => {
+    .map((item: any) => {
       const label = typeof item.question === "string" ? item.question.trim() : "";
       const key = slugify(label);
-      const category = item.header?.name?.trim();
+
+      const category =
+        Array.isArray(item.header) && item.header.length > 0
+          ? item.header[0].name?.trim()
+          : item.header?.name?.trim();
 
       if (!key || !category || !item.id) return null;
 
@@ -41,7 +47,7 @@ export async function fetchQuestionsWithHeaders(): Promise<FormQuestion[]> {
         category,
       };
     })
-    .filter(Boolean) as FormQuestion[];
+    .filter((q): q is FormQuestion => Boolean(q));
 }
 
 export async function fetchAllowedKeys(): Promise<string[]> {

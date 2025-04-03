@@ -1,4 +1,5 @@
 // constants/questionCategories.ts
+
 export const orderedCategories = [
 "Electrical",
 "Exterior Doors",

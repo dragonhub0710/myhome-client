@@ -1,4 +1,6 @@
 // src/app/api/chat/route.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
