@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ /* eslint-disable @typescript-eslint/no-explicit-any */
+ interface InputFormProps {
+   currentStep: number;
+   setCurrentStep: (step: number) => void;
+ }
+
 import { useEffect, useRef, useState } from "react";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/src/hooks/use-toast";
@@ -39,6 +44,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const projectData = useAtomValue(projectAtom);
   const headerData = useAtomValue(headerAtom);
   const questionData = useAtomValue(questionAtom);
+  const setProjectData = useSetAtom(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [answerList, setAnswerList] = useState<AnswerProps[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,31 +58,66 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     },
   };
 
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const [showReview, setShowReview] = useState(false);
+
   useEffect(() => {
-    if (projectData && projectData.selectedItem) {
+    if (projectData?.selectedItem) {
       setAnswerList(projectData.selectedItem.answers || []);
     }
   }, [projectData]);
 
   useEffect(() => {
     if (headerData.list && headerData.list.length > 0) {
-      const initialExpandedSections = new Array(headerData.list.length).fill(
-        false
-      );
-      setExpandedSections(initialExpandedSections);
+      setExpandedSections(new Array(headerData.list.length).fill(false));
     }
   }, [headerData]);
 
+  const updateAnswer = (questionId: string, answer: string) => {
+      setAnswerList((prevAnswers) => {
+        const existingIndex = prevAnswers.findIndex(
+          (item) => item.questionId === questionId
+        );
+
+        if (existingIndex !== -1) {
+          const updatedAnswers = [...prevAnswers];
+          updatedAnswers[existingIndex] = { questionId, answer };
+          return updatedAnswers;
+        } else {
+          return [...prevAnswers, { questionId, answer }];
+        }
+      });
+    };
+
   const toggleSection = (index: number) => {
     setExpandedSections((prev) => {
-      const updated = { ...prev };
+      const updated = [...prev];
       updated[index] = !prev[index];
       return updated;
     });
   };
 
-  const handleGotoNextStep = () => {
-    setCurrentStep(currentStep + 1);
+  const goToCategory = (index: number) => {
+    setCurrentCategoryIndex(index);
+    setShowReview(false);
+  };
+
+  const handleGotoNextCategory = () => {
+    if (currentCategoryIndex < headerData.list.length - 1) {
+      setCurrentCategoryIndex((prev) => prev + 1);
+    } else {
+      setShowReview(true);
+    }
+  };
+
+  const handleGotoPreviousCategory = () => {
+    if (currentCategoryIndex > 0) {
+      setCurrentCategoryIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleGotoReview = () => {
+    setShowReview(true);
   };
 
   const handleSaveAnswers = async () => {
@@ -173,9 +214,9 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
 
           if (fetchError) throw fetchError;
 
-          if (existingProduct && existingProduct.length > 0) {
+          if (existingProduct) {
             // If the product exists, update its quantity
-            const newQuantity = existingProduct[0].quantity + item.quantity;
+            const newQuantity = item.quantity;
             const { error: updateError } = await supabase
               .from("project_products")
               .update({ quantity: newQuantity })
@@ -200,6 +241,18 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         .update({ answers })
         .eq("id", projectData.selectedItem.id);
       if (error) throw error;
+      setProjectData((prev) => {
+        if (!prev?.selectedItem) return prev;
+        return {
+          ...prev,
+          selectedItem: {
+            ...prev.selectedItem,
+            answers,
+          },
+        };
+      });
+
+      toast({ title: "Answers saved successfully!" });
       return;
     } catch (err) {
       console.log(err);
@@ -212,56 +265,102 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     }
   };
 
-  const updateAnswer = (questionId: string, answer: string) => {
-    setAnswerList((prevAnswers) => {
-      const existingIndex = prevAnswers.findIndex(
-        (item) => item.questionId === questionId
-      );
+  if (!headerData?.list || !questionData?.list || headerData.list.length === 0) {
+    return <div className="p-6">Loading form...</div>;
+  }
 
-      if (existingIndex !== -1) {
-        const updatedAnswers = [...prevAnswers];
-        updatedAnswers[existingIndex] = { questionId, answer };
-        return updatedAnswers;
-      } else {
-        return [...prevAnswers, { questionId, answer }];
-      }
-    });
-  };
+  const currentHeader = headerData.list[currentCategoryIndex];
+  const currentQuestions = questionData.list.filter(
+   (q: any) => q.header === currentHeader.id
+   );
+
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full relative px-10 pr-5 py-6 space-y-4 overflow-y-auto"
-    >
+    <div ref={containerRef} className="w-full relative px-10 pr-5 py-6 space-y-4 overflow-y-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-semibold">Input Form</h1>
-          <p className="text-sm text-muted-foreground">STEP 1/3</p>
+          <p className="text-sm text-muted-foreground">
+            {showReview ? "Review" : `Category ${currentCategoryIndex + 1}/${headerData.list.length}`}
+          </p>
         </div>
-        <Button
-          onClick={handleSaveAnswers}
-          className="w-36 bg-[#2365C8] text-white hover:bg-blue-700"
-        >
-          {isLoading ? (
-            <div className="w-12 h-12">
-              <DynamicLottie
-                options={LoadingOptions}
-                isClickToPauseDisabled={true}
-              />
-            </div>
-          ) : (
-            <p>Save Changes</p>
-          )}
-        </Button>
+        {!showReview && (
+          <Button onClick={handleGotoReview} className="bg-gray-300 hover:bg-gray-400">
+            Jump to Review
+          </Button>
+        )}
       </div>
 
-      <div className="w-full relative space-y-2">
-        {headerData.list &&
-          headerData.list.length > 0 &&
-          headerData.list.map((item: any, idx: number) => {
-            const questions = questionData.list.filter(
-              (question: any) => question.header === item.id
-            );
+      {!showReview && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-medium">{currentHeader.name}</h2>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {currentQuestions.map((question: any, index: number) => {
+    const answer = answerList.find((a: any) => a.questionId === question.id)?.answer || "";
+    return (
+      <div key={index} className="flex items-center space-x-4">
+        <p className="w-1/2 text-sm">{question.question}</p>
+        {question.type === "options" ? (
+          <Select value={answer} onValueChange={(val) => updateAnswer(question.id, val)}>
+                <SelectTrigger className="w-full bg-white text-black border border-gray-300 shadow-sm">
+              <SelectValue placeholder="Select an answer" />
+            </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 shadow-md z-50">
+              {question.answer?.map((opt: any, idx: number) => (
+                <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            type="number"
+            value={answer}
+            onChange={(e) => updateAnswer(question.id, e.target.value)}
+            className="max-w-[200px]"
+          />
+        )}
+      </div>
+    );
+  })}
+</div>
+
+
+          <div className="flex justify-between pt-4">
+            <div className="flex gap-2">
+              <Button
+                disabled={currentCategoryIndex === 0}
+                onClick={handleGotoPreviousCategory}
+                className="bg-gray-300 hover:bg-gray-400"
+              >
+                Previous Category
+              </Button>
+              <Button
+                onClick={handleGotoNextCategory}
+                className="bg-[#2365C8] text-white hover:bg-blue-700"
+              >
+                {currentCategoryIndex === headerData.list.length - 1 ? "Finish" : "Next Category"}
+              </Button>
+            </div>
+            <Button
+              onClick={handleSaveAnswers}
+              className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
+            >
+              {isLoading ? (
+                <div className="w-6 h-6">
+                  <DynamicLottie options={{ loop: true, autoplay: true, animationData: Loading_Animation }} isClickToPauseDisabled={true} />
+                </div>
+              ) : (
+                <span>Save Changes</span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {showReview && (
+        <div className="space-y-4">
+         {headerData.list.map((item: any, idx: number) => {
+           const questions = questionData.list.filter((q: any) => q.header === item.id);
             return (
               <div key={idx} className="w-full space-y-[2px]">
                 <button
@@ -271,93 +370,71 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                   <div className="flex items-center">
                     <span className="font-medium">{item.name}</span>
                   </div>
-                  {expandedSections[idx] ? (
-                    <ChevronUp className="h-5 w-5" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5" />
-                  )}
+                  {expandedSections[idx] ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                 </button>
-                {expandedSections[idx] &&
-                  questions &&
-                  questions.length > 0 &&
-                  questions.map((question: any, index: number) => {
-                    const answer =
-                      answerList.find(
-                        (answer) => answer.questionId === question.id
-                      )?.answer || "";
-                    return (
-                      <div
-                        key={index}
-                        className="w-full h-12 py-1 flex items-center rounded-lg bg-white border"
-                      >
-                        <p className="w-fit px-5 text-sm text-[#4D4D4D]">
-                          {question.question}
-                        </p>
-                        <div className="w-full flex justify-end flex-1">
-                          {question.type === "options" && (
-                            <Select
-                              value={answer}
-                              onValueChange={(value: string) => {
-                                updateAnswer(question.id, value);
-                              }}
-                            >
-                              <SelectTrigger className="max-w-[400px] bg-transparent border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0">
-                                <SelectValue placeholder="Select an answer" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-white">
-                                {question.answer &&
-                                  question.answer.length > 0 &&
-                                  question.answer.map(
-                                    (answer: any, idx: number) => {
-                                      return (
-                                        <SelectItem
-                                          key={idx}
-                                          value={answer.id}
-                                          className="hover:bg-gray-300"
-                                        >
-                                          {answer.text}
-                                        </SelectItem>
-                                      );
-                                    }
-                                  )}
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {question.type === "number" && (
-                            <Input
-                              type="number"
-                              value={answer}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => {
-                                const value = e.target.value;
-                                if (!isNaN(Number(value)) || value === "") {
-                                  updateAnswer(question.id, value);
-                                }
-                              }}
-                              placeholder="Type here ..."
-                              className="max-w-[400px] border-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
-                            />
-                          )}
+                {expandedSections[idx] && (
+                  <div className="space-y-2">
+                    {questions.map((question: any, index: number) => {
+                      const answer = answerList.find((a: any) => a.questionId === question.id)?.answer || "";
+                      return (
+                        <div key={index} className="w-full h-12 py-1 flex items-center rounded-lg bg-white border">
+                          <p className="w-fit px-5 text-sm text-[#4D4D4D]">{question.question}</p>
+                          <div className="w-full flex justify-end flex-1">
+                            {question.type === "options" ? (
+                              <Select value={answer} onValueChange={(value) => updateAnswer(question.id, value)}>
+                               <SelectTrigger className="max-w-[400px] bg-white text-black border border-gray-300">
+                                  <SelectValue placeholder="Select an answer" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  {question.answer?.map((opt: any, idx: number) => (
+                                    <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                type="number"
+                                value={answer}
+                                onChange={(e) => updateAnswer(question.id, e.target.value)}
+                                placeholder="Type here ..."
+                                className="max-w-[400px] border-none bg-white"
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                    <div className="flex justify-end">
+                      <Button
+                        className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-900"
+                        onClick={() => goToCategory(idx)}
+                      >
+                        Go to Full Category Form
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
-      </div>
-      <div className="flex gap-4 pt-4">
-        <Button disabled className="bg-[#2365C8] text-white hover:bg-blue-700">
-          Previous Step
-        </Button>
-        <Button
-          onClick={handleGotoNextStep}
-          className="bg-[#2365C8] text-white hover:bg-blue-700"
-        >
-          Next Step
-        </Button>
-      </div>
+
+          <div className="flex justify-end pt-6">
+            <Button
+              onClick={handleSaveAnswers}
+              className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
+            >
+              {isLoading ? (
+                <div className="w-6 h-6">
+                  <DynamicLottie options={{ loop: true, autoplay: true, animationData: Loading_Animation }} isClickToPauseDisabled={true} />
+                </div>
+              ) : (
+                <span>Save Changes</span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
