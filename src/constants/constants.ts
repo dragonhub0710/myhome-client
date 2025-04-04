@@ -22,3 +22,16 @@ export const LOCAL_STAIR_TREADS = "Local Stair Treads";
 export const LOCAL_CABINETS = "Local Cebinets";
 export const OVERAGE_TILE = "Overage Tile";
 export const OVERAGE_LVP = "Overage LVP";
+
+export const IN_PROGRESS_PROJECT_LABEL = "In Progress";
+export const IN_PROGRESS_PROJECT_VALUE = "in_progress";
+export const COMPLETED_PROJECT_LABEL = "Completed";
+export const COMPLETED_PROJECT_VALUE = "completed";
+export const ARCHIVED_PROJECT_LABEL = "Archived";
+export const ARCHIVED_PROJECT_VALUE = "archived";
+
+export const DELETED_PROJECT = "deleted";
+export const CREATED_AT_LABEL = "Created At";
+export const CREATED_AT_VALUE = "created_at";
+export const PROJECT_NAME_LABEL = "Project Name";
+export const PROJECT_NAME_VALUE = "name";

@@ -108,7 +108,7 @@ export default function MaterialInputTab() {
       const { data, error } = await supabase
         .from("headers")
         .select("*")
-        .order("name", { ascending: true });
+        .order("order", { ascending: true });
       if (error) throw error;
 
       getAllQuestions(data);

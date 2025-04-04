@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -9,7 +8,6 @@ import { useAtomValue } from "jotai";
 import { useForm } from "react-hook-form";
 import { authAtom } from "@/src/atoms/authAtom";
 import { Eye, EyeOff } from "lucide-react";
-import { useToast } from "@/src/hooks/use-toast";
 import { supabase } from "@/src/lib/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signinSchema } from "@/src/schema/schema";
@@ -32,7 +30,6 @@ const DynamicLottie = dynamic(() => import("react-lottie"), {
 });
 
 export default function IntegrationTab() {
-  const { toast } = useToast();
   const [openConnect, setOpenConnect] = useState(false);
   const [openDisconnect, setOpenDisconnect] = useState(false);
   const [isloading, setIsLoading] = useState(false);
@@ -65,7 +62,6 @@ export default function IntegrationTab() {
     } else {
       setOpenConnect(true);
     }
-    // userData.user && userData.user.amazon_email
   };
 
   const handleLowesCredentials = () => {
@@ -76,70 +72,6 @@ export default function IntegrationTab() {
   const handleHomeDepotCredentials = () => {
     // setWebsiteName(HOMEDEPOT_WEBSITE_LABEL)
     // setOpen(true);
-  };
-
-  const handleSignIn = async (user: any) => {
-    try {
-      const socket = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "");
-
-      socket.addEventListener("open", async () => {
-        console.log("WebSocket connection opened");
-        setIsLoading(true);
-        const data = {
-          email: user.email,
-          password: user.password,
-        };
-        socket.send(JSON.stringify({ status: "connect_amazon_cart", data }));
-      });
-
-      socket.addEventListener("message", async (event) => {
-        const { status, cookies } = JSON.parse(event.data);
-        if (status == "success_amazon_connecting") {
-          const updatedData = userData.user;
-          if (websiteName === AMAZON_WEBSITE_LABEL) {
-            updatedData.amazon_email = user.email;
-            updatedData.amazon_password = user.password;
-            updatedData.amazon_cookies = JSON.stringify(cookies);
-          } else if (websiteName === LOWES_WEBSITE_LABEL) {
-            updatedData.lowes_email = user.email;
-            updatedData.lowes_password = user.password;
-            updatedData.lowes_cookies = JSON.stringify(cookies);
-          } else if (websiteName === HOMEDEPOT_WEBSITE_LABEL) {
-            updatedData.homedepot_email = user.email;
-            updatedData.homedepot_password = user.password;
-            updatedData.homedepot_cookies = JSON.stringify(cookies);
-          }
-          await supabase.auth.updateUser({
-            data: updatedData,
-          });
-          toast({
-            title: "Connected successfully",
-            variant: "default",
-          });
-          setOpenConnect(false);
-        }
-        if (status == "failed_amazon_connecting") {
-          socket.close();
-          toast({
-            title: "Invalid credentials",
-            variant: "destructive",
-          });
-        }
-      });
-
-      socket.addEventListener("close", () => {
-        console.log("WebSocket connection closed");
-        setIsLoading(false);
-      });
-    } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
-      });
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const disconnectWebsite = async () => {
@@ -256,10 +188,7 @@ export default function IntegrationTab() {
             </DialogTitle>
           </DialogHeader>
           <div className="mt-5">
-            <form
-              onSubmit={form.handleSubmit((data) => handleSignIn(data))}
-              className="space-y-2"
-            >
+            <form className="space-y-2">
               <div className="flex flex-col">
                 <Input
                   id="email"
