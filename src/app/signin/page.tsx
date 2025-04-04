@@ -73,6 +73,19 @@ export default function SignInPage() {
     }
   };
 
+  const handleSignInByGoogle = async () => {
+    try {
+      setIsLoading(true);
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
+    } catch (err) {
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex flex-col items-center p-2 lg:p-6 relative">
@@ -87,20 +100,19 @@ export default function SignInPage() {
             </p>
           </div>
           <div className="w-full flex justify-between gap-3">
-            <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/google`}>
-              <Button
-                variant="outline"
-                className="w-[205px] h-14 bg-white rounded-xl text-sm lg:text-base font-medium"
-              >
-                <Image
-                  alt="google"
-                  src="/svg/google.svg"
-                  width={22}
-                  height={22}
-                />
-                Sign In With Google
-              </Button>
-            </a>
+            <Button
+              onClick={() => handleSignInByGoogle()}
+              variant="outline"
+              className="w-[205px] h-14 bg-white rounded-xl text-sm lg:text-base font-medium"
+            >
+              <Image
+                alt="google"
+                src="/svg/google.svg"
+                width={22}
+                height={22}
+              />
+              Sign In With Google
+            </Button>
             <Button
               variant="outline"
               className="w-[200px] h-14 bg-white rounded-xl text-sm lg:text-base font-medium"
