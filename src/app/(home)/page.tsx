@@ -1,18 +1,20 @@
 "use client";
 
 import { MainSidebar } from "@/src/components/main-sidebar";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/projects");
+  }, [router]);
+
   return (
     <div className="flex h-screen">
       <MainSidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-          </div>
-        </div>
-      </main>
+      <main className="flex-1 overflow-y-auto"></main>
     </div>
   );
 }

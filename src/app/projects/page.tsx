@@ -28,23 +28,36 @@ import {
 import { ProjectCard } from "@/src/components/card/project-card";
 import NewProjectContent from "@/src/components/dialog/new-project";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
+import {
+  ACTIVED_PROJECT_VALUE,
+  ACTIVED_PROJECT_LABEL,
+  ARCHIVED_PROJECT_VALUE,
+  ARCHIVED_PROJECT_LABEL,
+  CREATED_AT_LABEL,
+  CREATED_AT_VALUE,
+  PROJECT_NAME_LABEL,
+  PROJECT_NAME_VALUE,
+} from "@/src/constants/constants";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
 
-const sortLabels = ["Created At", "Project Name", "Status"];
-const sortFields = ["created_at", "name", "status"];
+const sortLabels = [CREATED_AT_LABEL, PROJECT_NAME_LABEL];
+const sortFields = [CREATED_AT_VALUE, PROJECT_NAME_VALUE];
 
-export default function HomePage() {
-  const auth = useAtomValue(authAtom);
+const filterLabels = ["All", ACTIVED_PROJECT_LABEL, ARCHIVED_PROJECT_LABEL];
+const filterFields = [null, ACTIVED_PROJECT_VALUE, ARCHIVED_PROJECT_VALUE];
+
+export default function ProjectsPage() {
   const { toast } = useToast();
-  const [projectList, setProjectList] = useAtom(projectAtom);
+  const auth = useAtomValue(authAtom);
+  const [projectData, setProjectData] = useAtom(projectAtom);
   const [openDialog, setOpenDialog] = useState(false);
-  const [openMenu, setOpenMenu] = useState(false);
   const [isloading, setIsLoading] = useState(false);
-  const [sortby, setSortby] = useState(sortLabels[0]);
+  const [sortby, setSortby] = useState(CREATED_AT_VALUE);
   const [sortDirection, setSortDirection] = useState(true);
+  const [filter, setFilter] = useState<boolean | null>(null);
 
   const LoadingOptions = {
     loop: true,
@@ -56,38 +69,51 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    if (auth.user) {
-      const sortField = getSortDirection(sortby);
-      getAllProjects(sortField, sortDirection);
-    }
-  }, [auth.user, sortby, sortDirection]);
+    if (auth.user) getAllProjects();
+  }, [auth.user, filter, sortby, sortDirection]);
 
-  const getAllProjects = async (
-    sort: string = sortFields[0],
-    direction: boolean = true
-  ) => {
+  const getAllProjects = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("user_id", auth.user?.id)
-        .order(sort, { ascending: direction });
+      let rows = [];
+      if (filter == null) {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", auth.user?.id)
+          .order(sortby, { ascending: sortDirection });
 
-      if (error) {
-        toast({
-          title: "Something wrong!",
-          variant: "destructive",
-        });
+        if (error) {
+          toast({
+            title: "Something wrong!",
+            variant: "destructive",
+          });
+        }
+        if (data) rows = data;
+      } else {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", auth.user?.id)
+          .eq("status", filter)
+          .order(sortby, { ascending: sortDirection });
+
+        if (error) {
+          toast({
+            title: "Something wrong!",
+            variant: "destructive",
+          });
+        }
+        if (data) rows = data;
       }
-      if (data) {
-        setProjectList({
-          list: data,
-          selectedItem: null,
-          sortField: sort,
-          sortDirection: direction,
-        });
-      }
+
+      setProjectData({
+        list: rows,
+        selectedItem: null,
+        sortField: sortby,
+        sortDirection: sortDirection,
+        filter: filter,
+      });
     } catch (error) {
       toast({
         title: "A network error occurred",
@@ -98,28 +124,37 @@ export default function HomePage() {
       setIsLoading(false);
     }
   };
-
-  const getSortDirection = (sortby: string) => {
-    let sortField = null;
+  const getSortFieldLabel = () => {
+    let sortFieldLabel = "";
     switch (sortby) {
-      case sortLabels[0]:
-        sortField = sortFields[0];
+      case CREATED_AT_VALUE:
+        sortFieldLabel = CREATED_AT_LABEL;
         break;
-      case sortLabels[1]:
-        sortField = sortFields[1];
-        break;
-      case sortLabels[2]:
-        sortField = sortFields[2];
+      case PROJECT_NAME_VALUE:
+        sortFieldLabel = PROJECT_NAME_LABEL;
         break;
       default:
-        sortField = sortFields[0];
         break;
     }
-    return sortField;
+    return sortFieldLabel;
   };
 
-  const handleOpenMenu = () => {
-    setOpenMenu((open) => !open);
+  const getFilterLabel = () => {
+    let filterLabel = "";
+    switch (filter) {
+      case null:
+        filterLabel = "All";
+        break;
+      case ACTIVED_PROJECT_VALUE:
+        filterLabel = ACTIVED_PROJECT_LABEL;
+        break;
+      case ARCHIVED_PROJECT_VALUE:
+        filterLabel = ARCHIVED_PROJECT_LABEL;
+        break;
+      default:
+        break;
+    }
+    return filterLabel;
   };
 
   return (
@@ -132,7 +167,7 @@ export default function HomePage() {
 
             <Dialog open={openDialog} onOpenChange={setOpenDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white">
+                <Button className="bg-primary rounded-lg h-[42px] w-[192px] text-white">
                   <div className="w-6 h-6 flex items-center justify-center border-2 border-white rounded-lg">
                     <Plus className="h-4 w-4 text-white" />
                   </div>
@@ -153,21 +188,47 @@ export default function HomePage() {
           <div className="w-full"></div>
           <div className="w-full flex my-4 justify-between">
             <p className="text-lg font-medium">
-              {projectList.list && projectList.list.length}&nbsp;
-              {projectList.list && projectList.list.length > 1
+              {projectData.list && projectData.list.length}&nbsp;
+              {projectData.list && projectData.list.length > 1
                 ? "Projects"
                 : "Project"}
             </p>
             <div className="flex space-x-2 items-center">
-              <DropdownMenu open={openMenu} onOpenChange={handleOpenMenu}>
+              <DropdownMenu>
                 <DropdownMenuTrigger>
                   <div className="w-36 flex items-center justify-between border-[1px] rounded-lg px-3 py-2 hover:shadow">
-                    <p className="text-sm">{sortby}</p>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform duration-300 ${
-                        openMenu ? "rotate-180" : ""
-                      }`}
-                    />
+                    <p className="text-sm">{getFilterLabel()}</p>
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-white space-y-1"
+                  >
+                    {filterLabels.map((item, idx) => {
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => setFilter(filterFields[idx])}
+                          className={`rounded-lg cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-[white] ${
+                            filterFields[idx] === filter
+                              ? "bg-primary text-white"
+                              : "bg-white text-black"
+                          }`}
+                        >
+                          {item}
+                        </div>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <div className="w-36 flex items-center justify-between border-[1px] rounded-lg px-3 py-2 hover:shadow">
+                    <p className="text-sm">{getSortFieldLabel()}</p>
+                    <ChevronDown className="w-4 h-4" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
@@ -180,16 +241,15 @@ export default function HomePage() {
                         <div
                           key={idx}
                           onClick={() => {
-                            setSortby(item);
-                            setOpenMenu(false);
+                            setSortby(sortFields[idx]);
                           }}
-                          className={`rounded-lg cursor-pointer px-4 py-2 hover:bg-[#2365C8] hover:text-[white] ${
-                            item === sortby
-                              ? "bg-[#2365C8] text-white"
+                          className={`rounded-lg cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-[white] ${
+                            sortFields[idx] === sortby
+                              ? "bg-primary text-white"
                               : "bg-white text-black"
                           }`}
                         >
-                          <p className="text-sm">{item}</p>
+                          {item}
                         </div>
                       );
                     })}
@@ -215,14 +275,10 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              projectList.list &&
-              projectList.list.length > 0 &&
-              projectList.list.map((item: any, idx: number) => {
-                return (
-                  <a key={idx} href={`/projects/${item.id}`}>
-                    <ProjectCard data={item} />
-                  </a>
-                );
+              projectData.list &&
+              projectData.list.length > 0 &&
+              projectData.list.map((item: any, idx: number) => {
+                return <ProjectCard key={idx} data={item} />;
               })
             )}
           </div>
