@@ -113,7 +113,14 @@ export function ProjectCard(props: any) {
           />
           <div className="h-20 flex items-center">
             <div className="flex h-16 flex-col justify-between">
-              <p className="text-lg font-medium">{props.data.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="flex text-lg font-medium">{props.data.name}</p>
+                {!props.data.status && (
+                  <p className="flex text-base text-secondary">
+                    ({"Archived"})
+                  </p>
+                )}
+              </div>
               <p
                 className={
                   props.data.status ? "text-[#2AA200]" : "text-[#DB5D02]"
@@ -132,7 +139,7 @@ export function ProjectCard(props: any) {
             <TooltipTrigger
               disabled={!props.data.status}
               onClick={() => setOpenArchive(true)}
-              className="w-10 flex justify-center items-center cursor-pointer"
+              className="w-10 flex justify-center items-center cursor-pointer disabled:opacity-30"
             >
               <PanelTopOpen className="!h-6 !w-6" />
             </TooltipTrigger>
