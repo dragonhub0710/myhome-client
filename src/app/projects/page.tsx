@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,10 +28,12 @@ import { ProjectCard } from "@/src/components/card/project-card";
 import NewProjectContent from "@/src/components/dialog/new-project";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
 import {
-  ACTIVED_PROJECT_VALUE,
-  ACTIVED_PROJECT_LABEL,
-  ARCHIVED_PROJECT_VALUE,
+  IN_PROGRESS_PROJECT_LABEL,
+  IN_PROGRESS_PROJECT_VALUE,
+  COMPLETED_PROJECT_LABEL,
+  COMPLETED_PROJECT_VALUE,
   ARCHIVED_PROJECT_LABEL,
+  ARCHIVED_PROJECT_VALUE,
   CREATED_AT_LABEL,
   CREATED_AT_VALUE,
   PROJECT_NAME_LABEL,
@@ -43,11 +44,27 @@ const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
 
+interface ProjectCardProps {
+  id: string;
+  name: string;
+  status: string;
+}
+
 const sortLabels = [CREATED_AT_LABEL, PROJECT_NAME_LABEL];
 const sortFields = [CREATED_AT_VALUE, PROJECT_NAME_VALUE];
 
-const filterLabels = ["All", ACTIVED_PROJECT_LABEL, ARCHIVED_PROJECT_LABEL];
-const filterFields = [null, ACTIVED_PROJECT_VALUE, ARCHIVED_PROJECT_VALUE];
+const filterLabels = [
+  "All",
+  IN_PROGRESS_PROJECT_LABEL,
+  COMPLETED_PROJECT_LABEL,
+  ARCHIVED_PROJECT_LABEL,
+];
+const filterFields = [
+  "",
+  IN_PROGRESS_PROJECT_VALUE,
+  COMPLETED_PROJECT_VALUE,
+  ARCHIVED_PROJECT_VALUE,
+];
 
 export default function ProjectsPage() {
   const { toast } = useToast();
@@ -57,7 +74,7 @@ export default function ProjectsPage() {
   const [isloading, setIsLoading] = useState(false);
   const [sortby, setSortby] = useState(CREATED_AT_VALUE);
   const [sortDirection, setSortDirection] = useState(true);
-  const [filter, setFilter] = useState<boolean | null>(null);
+  const [filter, setFilter] = useState("");
 
   const LoadingOptions = {
     loop: true,
@@ -76,7 +93,7 @@ export default function ProjectsPage() {
     setIsLoading(true);
     try {
       let rows = [];
-      if (filter == null) {
+      if (filter == "") {
         const { data, error } = await supabase
           .from("projects")
           .select("*")
@@ -124,6 +141,7 @@ export default function ProjectsPage() {
       setIsLoading(false);
     }
   };
+
   const getSortFieldLabel = () => {
     let sortFieldLabel = "";
     switch (sortby) {
@@ -142,11 +160,14 @@ export default function ProjectsPage() {
   const getFilterLabel = () => {
     let filterLabel = "";
     switch (filter) {
-      case null:
+      case "":
         filterLabel = "All";
         break;
-      case ACTIVED_PROJECT_VALUE:
-        filterLabel = ACTIVED_PROJECT_LABEL;
+      case IN_PROGRESS_PROJECT_VALUE:
+        filterLabel = IN_PROGRESS_PROJECT_LABEL;
+        break;
+      case COMPLETED_PROJECT_VALUE:
+        filterLabel = COMPLETED_PROJECT_LABEL;
         break;
       case ARCHIVED_PROJECT_VALUE:
         filterLabel = ARCHIVED_PROJECT_LABEL;
@@ -277,7 +298,7 @@ export default function ProjectsPage() {
             ) : (
               projectData.list &&
               projectData.list.length > 0 &&
-              projectData.list.map((item: any, idx: number) => {
+              projectData.list.map((item: ProjectCardProps, idx: number) => {
                 return <ProjectCard key={idx} data={item} />;
               })
             )}

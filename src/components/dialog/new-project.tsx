@@ -15,7 +15,7 @@ import { CreateProject, createProjectSchema } from "@/src/schema/schema";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
-import { ACTIVED_PROJECT_VALUE } from "@/src/constants/constants";
+import { IN_PROGRESS_PROJECT_VALUE } from "@/src/constants/constants";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -67,7 +67,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
           square_feet: project.squareFeet,
           design_theme: null,
           room_upgrade: null,
-          status: ACTIVED_PROJECT_VALUE,
+          status: IN_PROGRESS_PROJECT_VALUE,
         });
 
       if (createError) {

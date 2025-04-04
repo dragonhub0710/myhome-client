@@ -7,7 +7,7 @@ interface ProjectState {
   selectedItem: any;
   sortField: string;
   sortDirection: boolean;
-  filter: boolean | null;
+  filter: string;
 }
 
 export const projectAtom = atom<ProjectState>({
@@ -15,5 +15,5 @@ export const projectAtom = atom<ProjectState>({
   selectedItem: null,
   sortField: CREATED_AT_VALUE,
   sortDirection: true,
-  filter: null,
+  filter: "",
 });
