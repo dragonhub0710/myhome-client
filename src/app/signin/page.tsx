@@ -78,6 +78,9 @@ export default function SignInPage() {
       setIsLoading(true);
       await supabase.auth.signInWithOAuth({
         provider: "google",
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/auth/callback`,
+        },
       });
     } catch (err) {
       throw err;
