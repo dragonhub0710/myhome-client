@@ -76,12 +76,19 @@ export default function SignInPage() {
   const handleSignInByGoogle = async () => {
     try {
       setIsLoading(true);
-      await supabase.auth.signInWithOAuth({
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/auth/callback`,
         },
       });
+
+      if (error) {
+        return router.push(`/signin?message=${error.message}`);
+      }
+
+      return router.push(data.url);
     } catch (err) {
       throw err;
     } finally {
