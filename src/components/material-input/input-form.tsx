@@ -15,6 +15,7 @@ import { supabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { headerAtom } from "@/src/atoms/headerAtom";
+import { designThemeAtom } from "@/src/atoms/themeAtom";
 import { questionAtom } from "@/src/atoms/questionAtom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -46,10 +47,12 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const { toast } = useToast();
   const projectData = useAtomValue(projectAtom);
   const headerData = useAtomValue(headerAtom);
+  const themeData = useAtomValue(designThemeAtom);
   const questionData = useAtomValue(questionAtom);
   const setProjectData = useSetAtom(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
   const [answerList, setAnswerList] = useState<AnswerProps[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedSections, setExpandedSections] = useState<boolean[]>([]);
@@ -103,6 +106,10 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
           return [...prevAnswers, { questionId, answer }];
         }
       });
+    };
+
+  const handleGotoPrevStep = () => {
+      setCurrentStep(currentStep - 1);
     };
 
   const handleGotoNextStep = () => {
@@ -326,8 +333,14 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
               <SelectValue placeholder="Select an answer" />
             </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-md z-50">
-              {question.answer?.map((opt: any, idx: number) => (
-                <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
+              {question.answer
+                ?.filter((opt: any) => {
+                  if (!selectedThemeId) return true;
+                  if (!opt.themes || opt.themes.length === 0) return true;
+                  return opt.themes.includes(selectedThemeId);
+                })
+                .map((opt: any, idx: number) => (
+                  <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -420,8 +433,14 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                                   <SelectValue placeholder="Select an answer" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
-                                  {question.answer?.map((opt: any, idx: number) => (
-                                    <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
+                                  {question.answer
+                                    ?.filter((opt: any) => {
+                                      if (!selectedThemeId) return true;
+                                      if (!opt.themes || opt.themes.length === 0) return true;
+                                      return opt.themes.includes(selectedThemeId);
+                                    })
+                                    .map((opt: any, idx: number) => (
+                                      <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -453,12 +472,18 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
           })}
 
         <div className="flex justify-end pt-6 gap-2">
-          <Button
-                     onClick={handleGotoNextStep}
-                     className="bg-[#2365C8] text-white hover:bg-blue-700"
-                   >
-                     Next Step
-                   </Button>
+            <Button
+                        onClick={handleGotoPrevStep}
+                        className="bg-[#2365C8] text-white hover:bg-blue-700"
+                      >
+                        Previous Step
+                      </Button>
+            <Button
+              onClick={handleGotoNextStep}
+              className="bg-[#2365C8] text-white hover:bg-blue-700"
+               >
+              Next Step
+              </Button>
 
           <AssistantPopup
             onSuggestion={(data) => {

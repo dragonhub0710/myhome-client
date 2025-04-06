@@ -224,6 +224,7 @@ export function DesignTheme({
         </div>
         <div className="flex gap-4 pt-4">
           <Button
+            disabled
             onClick={handleGotoPrevStep}
             className="bg-primary text-white hover:bg-blue-700"
           >
