@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
@@ -56,19 +55,17 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
   const handleCreateProject = async (project: CreateProject) => {
     setIsLoading(true);
     try {
-      const { data, error: createError } = await supabase
-        .from("projects")
-        .insert({
-          user_id: auth.user?.id,
-          name: project.name,
-          full_bathrooms: project.fullBathrooms,
-          half_bathrooms: project.halfBathrooms,
-          living_rooms: project.livingRooms,
-          square_feet: project.squareFeet,
-          design_theme: null,
-          room_upgrade: null,
-          status: IN_PROGRESS_PROJECT_VALUE,
-        });
+      const { error: createError } = await supabase.from("projects").insert({
+        user_id: auth.user?.id,
+        name: project.name,
+        full_bathrooms: project.fullBathrooms,
+        half_bathrooms: project.halfBathrooms,
+        living_rooms: project.livingRooms,
+        square_feet: project.squareFeet,
+        design_theme: null,
+        room_upgrade: null,
+        status: IN_PROGRESS_PROJECT_VALUE,
+      });
 
       if (createError) {
         toast({
@@ -118,7 +115,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                   className="h-14 w-full bg-white text-base"
                 />
                 {form.formState.errors.name && (
-                  <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.name.message}
                   </p>
                 )}
@@ -132,7 +129,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                     className="h-14 w-full bg-white text-base"
                   />
                   {form.formState.errors.fullBathrooms && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.fullBathrooms.message}
                     </p>
                   )}
@@ -145,7 +142,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                     className="h-14 w-full bg-white text-base"
                   />
                   {form.formState.errors.halfBathrooms && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.halfBathrooms.message}
                     </p>
                   )}
@@ -160,7 +157,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                     className="h-14 w-full bg-white text-base"
                   />
                   {form.formState.errors.livingRooms && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.livingRooms.message}
                     </p>
                   )}
@@ -173,7 +170,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                     className="h-14 w-full bg-white text-base"
                   />
                   {form.formState.errors.squareFeet && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.squareFeet.message}
                     </p>
                   )}
@@ -187,7 +184,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
               <Button
                 type="submit"
                 disabled={isloading || !isValid}
-                className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white"
+                className="bg-primary rounded-lg h-[42px] w-[192px] text-white"
               >
                 {isloading ? (
                   <div className="w-16 h-16">

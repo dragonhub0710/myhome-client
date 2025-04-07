@@ -137,7 +137,7 @@ export default function SignUpPage() {
                       className="h-14 w-full bg-white text-base"
                     />
                     {form.formState.errors.firstName && (
-                      <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                      <p className="text-sm mt-[4px] text-destructive">
                         {form.formState.errors.firstName.message}
                       </p>
                     )}
@@ -150,7 +150,7 @@ export default function SignUpPage() {
                       className="h-14 w-full bg-white text-base"
                     />
                     {form.formState.errors.lastName && (
-                      <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                      <p className="text-sm mt-[4px] text-destructive">
                         {form.formState.errors.lastName.message}
                       </p>
                     )}
@@ -165,7 +165,7 @@ export default function SignUpPage() {
                     className="h-14 w-full bg-white text-base"
                   />
                   {form.formState.errors.email && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.email.message}
                     </p>
                   )}
@@ -195,7 +195,7 @@ export default function SignUpPage() {
                     </Button>
                   </div>
                   {form.formState.errors.password && (
-                    <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.password.message}
                     </p>
                   )}
@@ -212,7 +212,7 @@ export default function SignUpPage() {
 
               <Button
                 type="submit"
-                className="w-full h-14 mt-10 rounded-xl bg-[#2365C8] text-lg font-medium text-white"
+                className="w-full h-14 mt-10 rounded-xl bg-primary text-lg font-medium text-white"
                 disabled={isloading || !isValid}
               >
                 {isloading ? (
@@ -231,7 +231,7 @@ export default function SignUpPage() {
                 Already have an account?
                 <Link
                   href="/signin"
-                  className="text-primary ml-2 font-medium hover:text-[#2365C8]"
+                  className="text-primary ml-2 font-medium hover:text-primary"
                 >
                   Sign In
                 </Link>

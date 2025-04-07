@@ -193,7 +193,7 @@ export default function ProfileTab() {
   };
 
   return (
-    <div className="w-full bg-white max-w-[600px] p-10 rounded-xl flex flex-col">
+    <div className="w-full bg-white max-w-[600px] border-[1px] shadow p-10 rounded-xl flex flex-col">
       <form
         onSubmit={form.handleSubmit((data) => handleUpdateProfile(data))}
         className="space-y-10"
@@ -234,7 +234,7 @@ export default function ProfileTab() {
                   onClick={removeImageChange}
                   className="absolute cursor-pointer text-white text-base top-0 right-0 w-fit h-hit opacity-50 hover:opacity-100 hover:bg-black rounded-full transition-opacity duration-300 bg-[gray]"
                 >
-                  <XIcon className="text-secondary" />
+                  <XIcon className="text-destructive" />
                 </div>
               )}
             </div>
@@ -251,7 +251,7 @@ export default function ProfileTab() {
                   />
                 )}
                 {form.formState.errors.firstName && (
-                  <p className="text-sm mt-[4px] text-secondary text-destructive">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.firstName.message}
                   </p>
                 )}
@@ -268,7 +268,7 @@ export default function ProfileTab() {
                   />
                 )}
                 {form.formState.errors.lastName && (
-                  <p className="text-sm mt-[4px] text-secondary text-destructive">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.lastName.message}
                   </p>
                 )}
@@ -287,7 +287,7 @@ export default function ProfileTab() {
               />
             )}
             {form.formState.errors.email && (
-              <p className="text-sm mt-[4px] text-secondary text-destructive">
+              <p className="text-sm mt-[4px] text-destructive">
                 {form.formState.errors.email.message}
               </p>
             )}
@@ -296,7 +296,7 @@ export default function ProfileTab() {
             <DialogTrigger asChild>
               <Button
                 disabled={!isEditable}
-                className="flex bg-transparent hover:text-white h-12 hover:shadow items-center rounded-lg cursor-pointer w-full px-4 py-0 justify-between border-[1px]"
+                className="flex bg-transparent text-black hover:text-white h-12 hover:shadow items-center rounded-lg cursor-pointer w-full px-4 py-0 justify-between border-[1px]"
               >
                 <div className="flex space-x-2">
                   <Lock className="text-primary !w-auto !h-6" />

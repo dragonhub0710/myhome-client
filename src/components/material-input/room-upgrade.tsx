@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +17,14 @@ import { authAtom } from "@/src/atoms/authAtom";
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
+
+interface RoomUpgradeProps {
+  image: string;
+  name: string;
+  description: string;
+  all_in_price: number;
+  locations: { name: string };
+}
 
 type MaterialInputProps = {
   currentStep: number;
@@ -49,7 +55,7 @@ export function RoomUpgrade({
 
   useEffect(() => {
     if (roomUpgradeData.list && roomUpgradeData.list.length > 0) {
-      roomUpgradeData.list.map((item: any, idx: number) => {
+      roomUpgradeData.list.map((item: { id: string }, idx: number) => {
         if (item.id === projectData.selectedItem.room_upgrade) {
           setPrevUpgradeIndex(idx);
           setNewUpgradeIndex(idx);
@@ -66,7 +72,7 @@ export function RoomUpgrade({
     if (!roomUpgradeData.list || roomUpgradeData.list.length === 0) return;
     try {
       setIsLoading(true);
-      const { data, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("projects")
         .update({ room_upgrade: roomUpgradeData.list[newUpgradeIndex].id })
         .eq("id", projectData.selectedItem.id);
@@ -135,7 +141,7 @@ export function RoomUpgrade({
           </div>
           <Button
             onClick={handleSaveChanges}
-            className="w-36 bg-[#2365C8] text-white hover:bg-blue-700"
+            className="w-36 bg-primary text-white hover:bg-blue-700"
           >
             {isLoading ? (
               <div className="w-12 h-12">
@@ -154,55 +160,56 @@ export function RoomUpgrade({
           <div className="flex gap-5 flex-wrap">
             {roomUpgradeData.list &&
               roomUpgradeData.list.length > 0 &&
-              roomUpgradeData.list.map((item: any, idx: number) => {
-                const isPrevUpgrade = prevUpgradeIndex === idx;
-                const isSelected = newUpgradeIndex === idx;
-                return (
-                  <div
-                    key={idx}
-                    className={`w-[190px] h-auto cursor-default relative space-y-2`}
-                    onClick={() => handleSelectRoomUpgrade(idx)}
-                  >
+              roomUpgradeData.list.map(
+                (item: RoomUpgradeProps, idx: number) => {
+                  const isPrevUpgrade = prevUpgradeIndex === idx;
+                  const isSelected = newUpgradeIndex === idx;
+                  return (
                     <div
-                      className={`relative block w-[190px] h-[254px] overflow-hidden rounded-xl hover:border-[#2365C8]  ${
-                        isPrevUpgrade
-                          ? "border-[#2365C8] border-4"
-                          : isSelected
-                          ? "border-[#2365C8] border-2"
-                          : "border-transparent"
-                      }`}
+                      key={idx}
+                      className={`w-[190px] h-auto cursor-default relative space-y-2`}
+                      onClick={() => handleSelectRoomUpgrade(idx)}
                     >
-                      <Image
-                        alt="theme"
-                        src={item.image ? item.image : "/img/card.png"}
-                        fill
-                        className="object-cover h-auto w-auto"
-                      />
-                      <div className="absolute bottom-2 right-2">
-                        <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
-                          ${item.all_in_price || 0}
+                      <div
+                        className={`relative block w-[190px] h-[254px] overflow-hidden rounded-xl hover:border-primary  ${
+                          isPrevUpgrade
+                            ? "border-primary border-4"
+                            : isSelected
+                            ? "border-primary border-2"
+                            : "border-transparent"
+                        }`}
+                      >
+                        <Image
+                          alt="theme"
+                          src={item.image ? item.image : "/img/card.png"}
+                          fill
+                          className="object-cover h-auto w-auto"
+                        />
+                        <div className="absolute bottom-2 right-2">
+                          <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
+                            ${item.all_in_price || 0}
+                          </div>
                         </div>
                       </div>
+                      <p className="text-sm opacity-60">
+                        {item.locations?.name}
+                      </p>
+                      <p className="text-lg font-medium">{item.name}</p>
+                      <p className="text-sm">{item.description}</p>
                     </div>
-                    <p className="text-sm opacity-60">{item.locations?.name}</p>
-                    <p className="text-lg font-medium">{item.name}</p>
-                    <p className="text-sm">{item.description}</p>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
           </div>
         </div>
         <div className="flex gap-4 pt-4">
           <Button
             onClick={handleGotoPrevStep}
-            className="bg-[#2365C8] text-white hover:bg-blue-700"
+            className="bg-primary text-white hover:bg-blue-700"
           >
             Previous Step
           </Button>
-          <Button
-            disabled
-            className="bg-[#2365C8] text-white hover:bg-blue-700"
-          >
+          <Button disabled className="bg-primary text-white hover:bg-blue-700">
             Next Step
           </Button>
         </div>
@@ -215,7 +222,7 @@ export function RoomUpgrade({
             <div className="w-[310px]"></div>
             <Button
               onClick={handleSaveChanges}
-              className="w-full flex-1 ml-4 bg-[#2365C8] cursor-pointer flex items-center justify-center h-[42px] rounded-xl text-white"
+              className="w-full flex-1 ml-4 bg-primary cursor-pointer flex items-center justify-center h-[42px] rounded-xl text-white"
             >
               {isLoading ? (
                 <div className="w-12 h-12">

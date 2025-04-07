@@ -265,7 +265,7 @@ export default function DesignGuideTab() {
                       return (
                         <div
                           key={idx}
-                          className="w-full max-w-[380px] h-[70px] justify-between items-center rounded-xl cursor-pointer hover:shadow-md flex p-5 bg-white"
+                          className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
                         >
                           <div className="flex gap-4">
                             <Image
@@ -328,7 +328,7 @@ export default function DesignGuideTab() {
                     return (
                       <div
                         key={idx}
-                        className="w-full max-w-[380px] h-[70px] justify-between items-center rounded-xl cursor-pointer hover:shadow-md flex p-5 bg-white"
+                        className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
                       >
                         <div className="flex gap-4">
                           <Image

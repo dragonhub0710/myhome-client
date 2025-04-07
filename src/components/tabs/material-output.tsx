@@ -384,7 +384,7 @@ export default function MaterialOutputTab() {
                     <Button
                       disabled={movePhaseDisabled}
                       onClick={handleMovePhase}
-                      className="w-full flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       {isPahseLoading ? (
                         <div className="w-full flex items-center justify-center">
@@ -404,7 +404,7 @@ export default function MaterialOutputTab() {
                     <Button
                       disabled={updateStatusDisabled}
                       onClick={() => handleUpdateStatus()}
-                      className="w-full flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       {isStatusLoading ? (
                         <div className="w-full flex items-center justify-center">
@@ -430,19 +430,19 @@ export default function MaterialOutputTab() {
                   <DropdownMenuContent className="bg-white">
                     <Button
                       onClick={() => exportToExcel(AMAZON_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       {AMAZON_WEBSITE_LABEL}
                     </Button>
                     <Button
                       onClick={() => exportToExcel(LOWES_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       {LOWES_WEBSITE_LABEL}
                     </Button>
                     <Button
                       onClick={() => exportToExcel(HOMEDEPOT_WEBSITE_LABEL)}
-                      className="w-36 flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       {HOMEDEPOT_WEBSITE_LABEL}
                     </Button>
@@ -457,14 +457,14 @@ export default function MaterialOutputTab() {
                   <DropdownMenuContent className="bg-white">
                     <Button
                       onClick={handleAddtoCart}
-                      className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300"
+                      className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                     >
                       <p>{AMAZON_WEBSITE_LABEL} Cart</p>
                     </Button>
-                    <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
+                    <Button className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300">
                       {LOWES_WEBSITE_LABEL} Cart
                     </Button>
-                    <Button className="w-48 flex justify-between px-4 bg-white hover:bg-gray-300">
+                    <Button className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300">
                       {HOMEDEPOT_WEBSITE_LABEL} Cart
                     </Button>
                   </DropdownMenuContent>

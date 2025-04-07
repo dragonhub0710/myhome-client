@@ -116,7 +116,7 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
                 </Button>
               </div>
               {oldPasswordRequired && (
-                <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                <p className="text-sm mt-[4px] text-destructive">
                   Old Password is required
                 </p>
               )}
@@ -145,7 +145,7 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
                 </Button>
               </div>
               {form.formState.errors.newPassword && (
-                <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                <p className="text-sm mt-[4px] text-destructive">
                   {form.formState.errors.newPassword.message}
                 </p>
               )}
@@ -174,7 +174,7 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
                 </Button>
               </div>
               {form.formState.errors.confirmPassword && (
-                <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                <p className="text-sm mt-[4px] text-destructive">
                   {form.formState.errors.confirmPassword.message}
                 </p>
               )}
@@ -186,7 +186,7 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
               <Button
                 type="submit"
                 disabled={isloading || !isValid}
-                className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white"
+                className="bg-primary rounded-lg h-[42px] w-[192px] text-white"
               >
                 {isloading ? (
                   <div className="w-16 h-16">

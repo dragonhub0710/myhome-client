@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -18,6 +17,10 @@ import { ResetPassword, resetPasswordSchema } from "@/src/schema/schema";
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
+
+interface UserProps {
+  newPassword: string;
+}
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
@@ -44,7 +47,7 @@ export default function ForgotPasswordPage() {
     form.getValues("newPassword") &&
     form.getValues("confirmPassword");
 
-  const handleSubmit = async (user: any) => {
+  const handleSubmit = async (user: UserProps) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.updateUser({
@@ -113,7 +116,7 @@ export default function ForgotPasswordPage() {
                   </Button>
                 </div>
                 {form.formState.errors.newPassword && (
-                  <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.newPassword.message}
                   </p>
                 )}
@@ -142,7 +145,7 @@ export default function ForgotPasswordPage() {
                   </Button>
                 </div>
                 {form.formState.errors.confirmPassword && (
-                  <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.confirmPassword.message}
                   </p>
                 )}
@@ -154,7 +157,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={isloading || !isValid}
-                  className="bg-[#2365C8] rounded-lg h-[42px] w-[192px] text-white"
+                  className="bg-primary rounded-lg h-[42px] w-[192px] text-white"
                 >
                   {isloading ? (
                     <div className="w-16 h-16">

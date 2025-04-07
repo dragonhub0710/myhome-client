@@ -210,7 +210,7 @@ export function ProjectCard(props: ProjectCardProps) {
   return (
     <div
       onClick={handleRedirectLink}
-      className="w-full justify-between rounded-xl cursor-pointer hover:shadow-md flex p-5 bg-white"
+      className="w-full justify-between rounded-xl cursor-pointer shadow-md hover:shadow-lg flex p-5 bg-white"
     >
       <div className="flex w-full flex-1 gap-4 cursor-pointer">
         <Image
@@ -300,14 +300,14 @@ export function ProjectCard(props: ProjectCardProps) {
             <DialogTitle className="w-full"></DialogTitle>
           </DialogHeader>
           <div className="space-y-6 flex flex-col items-center justify-center">
-            <Trash2Icon className="w-20 h-auto text-secondary" />
+            <Trash2Icon className="w-20 h-auto text-destructive" />
             <p className="text-2xl font-bold w-[272px]">
               Are you sure you want to delete the project?
             </p>
             <div className="w-full space-y-3">
               <Button
                 onClick={() => handleRemoveProject()}
-                className="bg-secondary hover:bg-[#ea2d36dc] text-white w-full h-10"
+                className="bg-destructive hover:bg-[#ea2d36dc] text-white w-full h-10"
               >
                 {isLoading ? (
                   <div className="w-16 h-16">

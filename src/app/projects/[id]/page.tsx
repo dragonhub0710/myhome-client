@@ -101,7 +101,7 @@ export default function ProjectDetailPage() {
                       value={item}
                       className={`rounded-lg px-3 py-2 font-light text-base ${
                         currentTab === item
-                          ? "!text-white !bg-[#2365C8]"
+                          ? "!text-white !bg-primary"
                           : "!text-[black] !bg-transparent"
                       }`}
                     >

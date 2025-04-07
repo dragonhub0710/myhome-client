@@ -56,7 +56,7 @@ export function MainSidebar() {
                   className={cn(
                     "w-full justify-start gap-3",
                     currentTab === item.href &&
-                      "bg-[#2365C8] rounded-full text-white"
+                      "bg-primary rounded-full text-white"
                   )}
                 >
                   {item.icon}
@@ -71,7 +71,7 @@ export function MainSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger>
               <div className="w-full flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full cursor-pointer flex items-center uppercase text-white justify-center text-lg font-bold bg-[#2365C8]">
+                <div className="w-10 h-10 rounded-full cursor-pointer flex items-center uppercase text-white justify-center text-lg font-bold bg-primary">
                   {auth.user?.avatar ? (
                     <Image
                       alt="user"

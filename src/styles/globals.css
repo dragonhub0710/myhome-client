@@ -2,22 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #f1f7fb;
-  --foreground: #171717;
+#root {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  text-align: left;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.logo {
+  height: 2em;
+  padding: 0;
+  will-change: filter;
+  transition: filter 300ms;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+.logo:hover {
+  filter: brightness(1.1);
+}
+
+.card {
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background-color: #f8fafc;
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover {
+  background-color: #f1f5f9;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.status-incomplete {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.status-complete {
+  background-color: #f0fdf4;
+  color: #10b981;
+}
+
+.sidebar {
+  background-color: white;
+  border-right: 1px solid #e2e8f0;
+  height: 100vh;
+  position: fixed;
+  width: 240px;
+  padding: 1.5rem;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #475569;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active {
+  background-color: #f1f5f9;
+  color: #1e40af;
+}
+
+.sidebar-item.active {
+  font-weight: 500;
+  background-color: #eff6ff;
 }
 
 .bg-image {

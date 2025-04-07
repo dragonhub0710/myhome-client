@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -21,6 +20,11 @@ import Loading_Animation from "@/src/components/loading/light_loading.json";
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
+
+interface UserProps {
+  email: string;
+  password: string;
+}
 
 export default function SignInPage() {
   const router = useRouter();
@@ -46,7 +50,7 @@ export default function SignInPage() {
     form.getValues("email") &&
     form.getValues("password");
 
-  const handleSignIn = async (user: any) => {
+  const handleSignIn = async (user: UserProps) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -60,7 +64,7 @@ export default function SignInPage() {
         });
       }
       if (data) {
-        router.push("/");
+        router.push("/projects");
       }
     } catch (error) {
       toast({
@@ -151,7 +155,7 @@ export default function SignInPage() {
                     className="h-14 w-full bg-white rounded-lg text-base"
                   />
                   {form.formState.errors.email && (
-                    <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.email.message}
                     </p>
                   )}
@@ -181,7 +185,7 @@ export default function SignInPage() {
                     </Button>
                   </div>
                   {form.formState.errors.password && (
-                    <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                    <p className="text-sm mt-[4px] text-destructive">
                       {form.formState.errors.password.message}
                     </p>
                   )}
@@ -191,13 +195,13 @@ export default function SignInPage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember"
-                      className="bg-[#2365C8] text-white rounded-full w-5 h-5"
+                      className="bg-primary text-white rounded-full w-5 h-5"
                     />
                     <Label htmlFor="remember">Remember me</Label>
                   </div>
                   <Link
                     href="/forgot-password"
-                    className="text-[#2365C8] text-sm"
+                    className="text-primary text-sm"
                   >
                     Forgot password?
                   </Link>
@@ -205,7 +209,7 @@ export default function SignInPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full h-14 mt-20 rounded-xl bg-[#2365C8] text-lg font-medium text-white"
+                className="w-full h-14 mt-20 rounded-xl bg-primary text-lg font-medium text-white"
                 disabled={isloading || !isValid}
               >
                 {isloading ? (
@@ -224,7 +228,7 @@ export default function SignInPage() {
                 Don’t have an account?
                 <Link
                   href="/signup"
-                  className="text-primary ml-2 font-medium hover:text-[#2365C8]"
+                  className="text-primary ml-2 font-medium hover:text-primary"
                 >
                   Sign Up
                 </Link>

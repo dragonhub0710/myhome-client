@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import Image from "next/image";
@@ -17,6 +15,12 @@ import { authAtom } from "@/src/atoms/authAtom";
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
+
+interface DesignThemeProps {
+  image: string;
+  name: string;
+  description: string;
+}
 
 type MaterialInputProps = {
   currentStep: number;
@@ -54,7 +58,7 @@ export function DesignTheme({
   useEffect(() => {
     if (designThemeData.list && designThemeData.list.length > 0) {
       getDesignThemePrices();
-      designThemeData.list.map((item: any, idx: number) => {
+      designThemeData.list.map((item: { id: string }, idx: number) => {
         if (item.id === projectData.selectedItem.design_theme) {
           setPrevThemeIndex(idx);
           setNewThemeIndex(idx);
@@ -64,7 +68,7 @@ export function DesignTheme({
   }, [designThemeData, projectData]);
 
   const getDesignThemePrices = async () => {
-    const promises = designThemeData.list.map(async (item: any) => {
+    const promises = designThemeData.list.map(async (item: { id: string }) => {
       const themeArrayString = JSON.stringify([item.id]);
       const { data, error } = await supabase
         .from("products")
@@ -104,7 +108,7 @@ export function DesignTheme({
     if (!designThemeData.list || designThemeData.list.length === 0) return;
     try {
       setIsLoading(true);
-      const { data, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("projects")
         .update({ design_theme: designThemeData.list[newThemeIndex].id })
         .eq("id", projectData.selectedItem.id);
@@ -165,7 +169,7 @@ export function DesignTheme({
           </div>
           <Button
             onClick={handleSaveChanges}
-            className="w-36 bg-[#2365C8] text-white hover:bg-blue-700"
+            className="w-36 bg-primary text-white hover:bg-blue-700"
           >
             {isLoading ? (
               <div className="w-12 h-12">
@@ -184,53 +188,55 @@ export function DesignTheme({
           <div className="flex space-x-5">
             {designThemeData.list &&
               designThemeData.list.length > 0 &&
-              designThemeData.list.map((item: any, idx: number) => {
-                const isPrevTheme = prevThemeIndex === idx;
-                const isSelected = newThemeIndex === idx;
-                return (
-                  <div
-                    key={idx}
-                    className={`w-[190px] h-auto cursor-default relative space-y-2`}
-                    onClick={() => setNewThemeIndex(idx)}
-                  >
+              designThemeData.list.map(
+                (item: DesignThemeProps, idx: number) => {
+                  const isPrevTheme = prevThemeIndex === idx;
+                  const isSelected = newThemeIndex === idx;
+                  return (
                     <div
-                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl ${
-                        isPrevTheme
-                          ? "border-[#2365C8] border-4"
-                          : isSelected
-                          ? "border-[#2365C8] border-2"
-                          : "border-transparent"
-                      }`}
+                      key={idx}
+                      className={`w-[190px] h-auto cursor-default relative space-y-2`}
+                      onClick={() => setNewThemeIndex(idx)}
                     >
-                      <Image
-                        alt="theme"
-                        src={item.image ? item.image : "/img/card.png"}
-                        fill
-                        className="object-cover"
-                      />
-                      <div className="absolute bottom-2 right-2">
-                        <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
-                          ${priceList[idx] || 0}
+                      <div
+                        className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl ${
+                          isPrevTheme
+                            ? "border-primary border-4"
+                            : isSelected
+                            ? "border-primary border-2"
+                            : "border-transparent"
+                        }`}
+                      >
+                        <Image
+                          alt="theme"
+                          src={item.image ? item.image : "/img/card.png"}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute bottom-2 right-2">
+                          <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
+                            ${priceList[idx] || 0}
+                          </div>
                         </div>
                       </div>
+                      <p className="text-lg font-medium">{item.name}</p>
+                      <p className="text-sm">{item.description}</p>
                     </div>
-                    <p className="text-lg font-medium">{item.name}</p>
-                    <p className="text-sm">{item.description}</p>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
           </div>
         </div>
         <div className="flex gap-4 pt-4">
           <Button
             onClick={handleGotoPrevStep}
-            className="bg-[#2365C8] text-white hover:bg-blue-700"
+            className="bg-primary text-white hover:bg-blue-700"
           >
             Previous Step
           </Button>
           <Button
             onClick={handleGotoNextStep}
-            className="bg-[#2365C8] text-white hover:bg-blue-700"
+            className="bg-primary text-white hover:bg-blue-700"
           >
             Next Step
           </Button>

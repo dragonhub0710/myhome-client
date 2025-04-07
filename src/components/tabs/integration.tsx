@@ -114,7 +114,7 @@ export default function IntegrationTab() {
           />
           <Button
             onClick={handleAmazonCredentials}
-            className="text-white text-base bg-[#2365C8] w-[113px] h-10"
+            className="text-white text-base bg-primary w-[113px] h-10"
           >
             {userData.user && userData.user.amazon_email
               ? "Disconnect"
@@ -143,7 +143,7 @@ export default function IntegrationTab() {
           />
           <Button
             onClick={handleLowesCredentials}
-            className="text-white text-base bg-[#2365C8] w-[113px] h-10"
+            className="text-white text-base bg-primary w-[113px] h-10"
           >
             {userData.user && userData.user.lowes_email
               ? "Disconnect"
@@ -166,7 +166,7 @@ export default function IntegrationTab() {
           />
           <Button
             onClick={handleHomeDepotCredentials}
-            className="text-white text-base bg-[#2365C8] w-[113px] h-10"
+            className="text-white text-base bg-primary w-[113px] h-10"
           >
             {userData.user && userData.user.homedepot_email
               ? "Disconnect"
@@ -197,7 +197,7 @@ export default function IntegrationTab() {
                   className="h-14 w-full bg-white rounded-lg text-base"
                 />
                 {form.formState.errors.email && (
-                  <p className="text-sm mt-[4px] text-[#EA2D38] text-destructive">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.email.message}
                   </p>
                 )}
@@ -226,7 +226,7 @@ export default function IntegrationTab() {
                   </Button>
                 </div>
                 {form.formState.errors.password && (
-                  <p className="text-sm mt-[4px] text-destructive text-[#EA2D38]">
+                  <p className="text-sm mt-[4px] text-destructive">
                     {form.formState.errors.password.message}
                   </p>
                 )}
@@ -234,7 +234,7 @@ export default function IntegrationTab() {
               <div className="flex pt-10 justify-center space-x-4">
                 <Button
                   type="submit"
-                  className="w-[120px] h-10 rounded-lg bg-[#2365C8] text-base font-medium text-white"
+                  className="w-[120px] h-10 rounded-lg bg-primary text-base font-medium text-white"
                   disabled={isloading || !isValid}
                 >
                   {isloading ? (
@@ -250,7 +250,7 @@ export default function IntegrationTab() {
                 </Button>
                 <Button
                   onClick={() => setOpenConnect(false)}
-                  className="w-[120px] h-10 rounded-lg bg-[#2365C8] text-base font-medium text-white"
+                  className="w-[120px] h-10 rounded-lg bg-primary text-base font-medium text-white"
                 >
                   Cancel
                 </Button>
@@ -270,7 +270,7 @@ export default function IntegrationTab() {
             <div className="flex pt-10 justify-center space-x-4">
               <Button
                 onClick={disconnectWebsite}
-                className="w-[120px] h-10 rounded-lg bg-[#2365C8] text-base font-medium text-white"
+                className="w-[120px] h-10 rounded-lg bg-primary text-base font-medium text-white"
                 disabled={isloading}
               >
                 {isloading ? (
@@ -286,7 +286,7 @@ export default function IntegrationTab() {
               </Button>
               <Button
                 onClick={() => setOpenDisconnect(false)}
-                className="w-[120px] h-10 rounded-lg bg-[#2365C8] text-base font-medium text-white"
+                className="w-[120px] h-10 rounded-lg bg-primary text-base font-medium text-white"
               >
                 No
               </Button>
