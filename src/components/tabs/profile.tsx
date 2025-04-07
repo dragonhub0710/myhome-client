@@ -83,7 +83,8 @@ export default function ProfileTab() {
     setIsLoading(true);
     try {
       if (auth.user.avatar) {
-        await removeImage(auth.user.avatar);
+        const filePath = extractFilePath(auth.user.avatar);
+        await removeImage(filePath);
       }
 
       const imgLink = await uploadImage();
@@ -183,6 +184,14 @@ export default function ProfileTab() {
     setFile(null);
   };
 
+  const extractFilePath = (publicUrl: string) => {
+    const url = new URL(publicUrl);
+    const filePath = decodeURIComponent(
+      url.pathname.split(`/storage/v1/object/public/images/`)[1]
+    );
+    return filePath;
+  };
+
   return (
     <div className="w-full bg-white max-w-[600px] p-10 rounded-xl flex flex-col">
       <form
@@ -191,14 +200,14 @@ export default function ProfileTab() {
       >
         <div className="space-y-4">
           <div className="w-full items-end flex space-x-8">
-            <div className="relative w-[100px] h-[100px]">
+            <div className="relative rounded-full w-[100px] h-[100px]">
               {imageUrl ? (
                 <Image
                   alt="user"
                   src={imageUrl}
                   width={100}
                   height={100}
-                  className="rounded-full"
+                  className="rounded-full w-[100px] h-[100px]"
                 />
               ) : (
                 <div className="rounded-full w-[100px] h-[100px] flex items-center justify-center bg-primary">
