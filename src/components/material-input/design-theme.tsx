@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import Image from "next/image";
 import dynamic from "next/dynamic";
 import { supabase } from "@/src/lib/supabase";
 import { designThemeAtom } from "@/src/atoms/themeAtom";
@@ -11,13 +10,14 @@ import { Button } from "@/src/components/ui/button";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
 import { roomUpgradeAtom } from "@/src/atoms/roomupgradeAtom";
 import { authAtom } from "@/src/atoms/authAtom";
+import { ImageCarousel } from "@/src/components/image-gallery";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
 
 interface DesignThemeProps {
-  image: string;
+  images: string[];
   name: string;
   description: string;
 }
@@ -27,7 +27,7 @@ type MaterialInputProps = {
   setCurrentStep: (currentStep: number) => void;
 };
 
-export function DesignTheme({
+export function DesignThemeDialog({
   currentStep,
   setCurrentStep,
 }: MaterialInputProps) {
@@ -207,12 +207,7 @@ export function DesignTheme({
                             : "border-transparent"
                         }`}
                       >
-                        <Image
-                          alt="theme"
-                          src={item.image ? item.image : "/img/card.png"}
-                          fill
-                          className="object-cover"
-                        />
+                        <ImageCarousel images={item.images} />
                         <div className="absolute bottom-2 right-2">
                           <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
                             ${priceList[idx] || 0}

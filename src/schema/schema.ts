@@ -79,7 +79,7 @@ export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 export const assumptionSchema = z.object({
   localWindows: numberSchema,
   localLVP: numberSchema,
-  localStairThreads: numberSchema,
+  localStairTreads: numberSchema,
   localInteriorDoors: numberSchema,
   localCabinets: numberSchema,
   overageTile: numberSchema,

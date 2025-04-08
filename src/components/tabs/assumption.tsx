@@ -55,15 +55,15 @@ export default function AssumptionTab() {
       if (data && data.length > 0) {
         form.setValue("localWindows", data[0].local_windows || 0);
         form.setValue("localLVP", data[0].local_lvp || 0);
-        form.setValue("localStairThreads", data[0].local_stair_threads || 0);
+        form.setValue("localStairTreads", data[0].local_stair_treads || 0);
         form.setValue("localInteriorDoors", data[0].local_interior_doors || 0);
         form.setValue("localCabinets", data[0].local_cabinets || 0);
         form.setValue("overageTile", data[0].overage_tile || 0);
-        form.setValue("overageLVP", data[0].oversage_lvp || 0);
+        form.setValue("overageLVP", data[0].overage_lvp || 0);
       } else {
         form.setValue("localWindows", 0);
         form.setValue("localLVP", 0);
-        form.setValue("localStairThreads", 0);
+        form.setValue("localStairTreads", 0);
         form.setValue("localInteriorDoors", 0);
         form.setValue("localCabinets", 0);
         form.setValue("overageTile", 0);
@@ -83,7 +83,7 @@ export default function AssumptionTab() {
         user_id: auth.user.id,
         local_windows: data.localWindows,
         local_lvp: data.localLVP,
-        local_stair_treads: data.localStairThreads,
+        local_stair_treads: data.localStairTreads,
         local_interior_doors: data.localInteriorDoors,
         local_cabinets: data.localCabinets,
         overage_tile: data.overageTile,
@@ -171,11 +171,11 @@ export default function AssumptionTab() {
                 <Label className="text-base">Stair Treads</Label>
                 <div className="relative">
                   <Input
-                    id="localStairThreads"
+                    id="localStairTreads"
                     placeholder="Stair Treads"
                     type="number"
                     disabled={!isEditable}
-                    {...form.register("localStairThreads", {
+                    {...form.register("localStairTreads", {
                       valueAsNumber: true,
                     })}
                     className="h-12 w-full pr-[62px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
@@ -185,9 +185,9 @@ export default function AssumptionTab() {
                   </div>
                 </div>
                 <div className="w-full flex justify-end">
-                  {form.formState.errors.localStairThreads && (
+                  {form.formState.errors.localStairTreads && (
                     <p className="text-xs text-destructive">
-                      {form.formState.errors.localStairThreads.message}
+                      {form.formState.errors.localStairTreads.message}
                     </p>
                   )}
                 </div>
