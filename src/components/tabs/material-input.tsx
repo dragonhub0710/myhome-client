@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/src/lib/supabase";
 import { useToast } from "@/src/hooks/use-toast";
 import { InputForm } from "../material-input/input-form";
-import { DesignTheme } from "../material-input/design-theme";
+import { DesignThemeDialog } from "../material-input/design-theme";
 import { RoomUpgrade } from "../material-input/room-upgrade";
 import { headerAtom } from "@/src/atoms/headerAtom";
 import { questionAtom } from "@/src/atoms/questionAtom";
@@ -36,7 +36,7 @@ export default function MaterialInputTab() {
     },
   };
   const componentsList = [
-    <DesignTheme
+    <DesignThemeDialog
       key={0}
       setCurrentStep={setCurrentStep}
       currentStep={currentStep}
