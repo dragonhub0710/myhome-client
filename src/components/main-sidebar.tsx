@@ -40,7 +40,7 @@ export function MainSidebar() {
 
   return (
     <div className="flex h-full w-60 p-5 bg-sidebar">
-      <div className="flex h-full w-full flex-col p-5 rounded-xl bg-white">
+      <div className="flex h-full w-full flex-col p-5 rounded-xl border-[1px] shadow bg-white">
         <div className="flex h-16 items-center px-6">
           <Image alt="Flipit" src="/svg/logo.svg" width={72} height={20} />
         </div>

@@ -20,14 +20,10 @@ const passwordSchema = z
 
 // Common number input validation
 const numberSchema = z
-  .string()
-  .min(1, "This are required")
-  .refine((val) => /^\d+$/.test(val), {
+  .number()
+  .nonnegative("This must be a non-negative number")
+  .refine((val) => !isNaN(val), {
     message: "This must be a valid number",
-  })
-  .transform((val) => parseInt(val, 10))
-  .refine((val) => val >= 0, {
-    message: "This must be a non-negative integer",
   });
 
 // User creation schema
@@ -80,14 +76,13 @@ export const resetPasswordSchema = z
 
 export type ResetPassword = z.infer<typeof resetPasswordSchema>;
 
-export const assumptionSheetSchema = z.object({
-  vendorWindows: numberSchema,
-  vendorLVP: numberSchema,
-  vendorStairTreads: numberSchema,
-  vendorDoors: numberSchema,
-  vendorCabinets: numberSchema,
-  materialTile: numberSchema,
-  materialLVP: numberSchema,
+export const assumptionSchema = z.object({
+  localWindows: numberSchema,
+  localLVP: numberSchema,
+  localStairThreads: numberSchema,
+  localInteriorDoors: numberSchema,
+  localCabinets: numberSchema,
+  overageTile: numberSchema,
+  overageLVP: numberSchema,
 });
-
-export type AssumptionSheet = z.infer<typeof assumptionSheetSchema>;
+export type AssumptionType = z.infer<typeof assumptionSchema>;
