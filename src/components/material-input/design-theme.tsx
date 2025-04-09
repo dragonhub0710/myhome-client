@@ -27,7 +27,7 @@ type MaterialInputProps = {
   setCurrentStep: (currentStep: number) => void;
 };
 
-export function DesignThemeDialog({
+export function DesignTheme({
   currentStep,
   setCurrentStep,
 }: MaterialInputProps) {
