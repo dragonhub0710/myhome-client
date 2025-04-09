@@ -13,9 +13,6 @@ const BudgetVanities = () => {
         "Glacier Bay Stancliff 30.5 in. W Vanity in White with Cultured Marble Vanity Top in White",
       description:
         "This budget-friendly vanity offers a classic Shaker-style design with clean lines and a bright white finish that works in virtually any bathroom. The cultured marble top with integrated sink simplifies installation while providing a clean, seamless look that appeals to buyers looking for no-fuss maintenance.",
-      price: "$199.00",
-      originalPrice: "$249.00",
-      discount: "20% OFF",
       pros: [
         "Pre-assembled cabinet saves installation time",
         "Integrated sink eliminates sealing concerns",
@@ -37,9 +34,6 @@ const BudgetVanities = () => {
         "Allen + Roth Everdene 36-in Gray Oak Single Sink Bathroom Vanity with White Engineered Stone Top",
       description:
         "This mid-range vanity offers exceptional value with its on-trend gray oak finish and engineered stone top. The transitional design bridges modern and traditional elements, making it versatile for various property styles, while the soft-close drawers add a premium touch buyers notice during showings.",
-      price: "$299.00",
-      originalPrice: "$379.00",
-      discount: "21% OFF",
       pros: [
         "Premium-look gray oak finish at budget price",
         "Soft-close drawers and doors add perceived value",
@@ -61,9 +55,6 @@ const BudgetVanities = () => {
         "Home Decorators Collection Ashburn 24 in. W x 21.75 in. D Vanity in White with Marble Vanity Top in Carrara White",
       description:
         "This compact vanity delivers surprising style with its genuine Carrara marble top and elegant white cabinet design, making it perfect for guest bathrooms and powder rooms. The traditional styling appeals to a wide range of buyers while the genuine stone top creates an upscale impression that helps sell properties faster.",
-      price: "$269.00",
-      originalPrice: "$339.00",
-      discount: "21% OFF",
       pros: [
         "Real Carrara marble top adds luxury appeal",
         "Perfect size for small bathrooms or powder rooms",
@@ -85,9 +76,6 @@ const BudgetVanities = () => {
         "Style Selections Ellenbee 48-in White Double Sink Bathroom Vanity with White Cultured Marble Top",
       description:
         "This double-sink vanity delivers maximum impact in master bathrooms at a remarkably budget-friendly price point. The traditional white design with satin nickel hardware creates a classic look that appeals to the widest range of buyers, while the double sink configuration is a must-have feature in primary bathroom renovations.",
-      price: "$399.00",
-      originalPrice: "$499.00",
-      discount: "20% OFF",
       pros: [
         "Double sink configuration ideal for master baths",
         "Wide countertop area provides ample space",
@@ -241,18 +229,6 @@ const BudgetVanities = () => {
                             ))}
                           </ul>
                         </div>
-                      </div>
-
-                      <div className="flex items-center mt-8">
-                        <span className="text-xl font-bold text-primary">
-                          {product.price}
-                        </span>
-                        <span className="ml-2 text-gray-500 line-through text-sm">
-                          {product.originalPrice}
-                        </span>
-                        <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                          {product.discount}
-                        </span>
                       </div>
 
                       <div className="pt-6">

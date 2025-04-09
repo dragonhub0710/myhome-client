@@ -12,9 +12,6 @@ const FastUpgrades = () => {
       title: "Modern Farmhouse 5-Light Kitchen Island Pendant",
       description:
         "This statement chandelier combines industrial black metal with clear glass shades, creating dramatic impact over kitchen islands, dining areas, or entryways. The adjustable height makes it versatile for various ceiling heights, while the modern farmhouse aesthetic appeals to today's buyers.",
-      price: "$199.99",
-      originalPrice: "$299.99",
-      discount: "33% OFF",
       pros: [
         "Creates instant visual impact in listing photos",
         "Appeals to current modern farmhouse trend",
@@ -27,7 +24,7 @@ const FastUpgrades = () => {
         "May need professional installation in older homes",
         "Clear glass shades require regular cleaning",
       ],
-      link: "https://www.amazon.com/XvmBvm-Lighting-Farmhouse-Chandelier-Fixtures/dp/B0D3D2Y9CZ/ref=sr_1_3?crid=1VBI368OKR720&dib=eyJ2IjoiMSJ9.fqUi8lp2o68MTmc9gMKrE7p23kZNPAJao-mHp3RNwPJ-3Hd2Mu28ykvmjRAhVnRku_3GPMp6ycjDZU_5E8OdOWpWqRD8QziTuj5mUnVfipXmVdhMQd1c-8y8SUgwWTH88yLCgLSeTwFH__nk_BQrD6tL-Pceg17sXtvYOIxJJmbHOrcXyaW1YZIpo_tzQoL7-zTylaH-j3Ww5ffCTxZkB55IpLAd-xWOjXGAjzUzXh0.jk7YTidBwU_VLLsGAoIFttJKPprEOUPh5sPSTkiiGpI&dib_tag=se&keywords=Modern+Farmhouse+5-Light+Kitchen+Island+Pendant&qid=1743776094&sprefix=modern+farmhouse+5-light+kitchen+island+pendant%2Caps%2C140&sr=8-3",
+      link: "https://amzn.to/4j5OjnY",
     },
     {
       id: 2,
@@ -35,9 +32,6 @@ const FastUpgrades = () => {
       title: "Brushed Gold Single-Handle Pull-Down Kitchen Faucet",
       description:
         "This eye-catching brushed gold kitchen faucet combines practicality with luxury appeal. The pull-down sprayer and single-handle design offer convenience, while the warm gold finish creates a high-end look that instantly elevates kitchen renovations without requiring major structural changes.",
-      price: "$159.99",
-      originalPrice: "$219.99",
-      discount: "27% OFF",
       pros: [
         "Upscale finish that signals luxury to buyers",
         "Universal single-hole mounting fits most sinks",
@@ -50,7 +44,7 @@ const FastUpgrades = () => {
         "Shows water spots more than brushed nickel",
         "May highlight dated elements in an older kitchen",
       ],
-      link: "https://www.amazon.com/Kraus-KPF-1691BB/dp/B088G1DK66/ref=sr_1_1_sspa?crid=2JY6RVDS6A2C7&dib=eyJ2IjoiMSJ9.AfF3GcPxOLqw6m0Sic8QM0Dwr-EMMz_T5IOKmV5kPYG8lea2mJGJGWxOkBPwO-O-8JWyPmL9hN6P0B20DLUu9zk8fcERbq3LdCZppYKet9EmE3vOnZ8bqPXoUfhuaONc97E8GEtmN5AAg8RVLx02P7qepiTlRh3ERFoDPtvFRlpa5uP6Q9UA64rey3qK82jS_jW-Q8MgVx18vkI5jXol_mbNb2Fjn9fwN606IdYb8Pc.2BhDfuDCI7QeFsCnljhyWaPrQUQNtN4YnYDLJ9AFKog&dib_tag=se&keywords=Brushed+Gold+Single-Handle+Pull-Down+Kitchen+Faucet&qid=1743776126&sprefix=brushed+gold+single-handle+pull-down+kitchen+faucet%2Caps%2C135&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1",
+      link: "https://amzn.to/4jevRZG",
     },
     {
       id: 3,
@@ -58,9 +52,6 @@ const FastUpgrades = () => {
       title: "Peel and Stick Geometric Hexagon Wallpaper",
       description:
         "This removable wallpaper creates instant drama in accent walls, bathroom vanity areas, or behind shelving. The subtle geometric pattern adds texture and interest without overwhelming the space, while the peel-and-stick application makes it ideal for quick transformations in rental properties or flips.",
-      price: "$42.99",
-      originalPrice: "$59.99",
-      discount: "28% OFF",
       pros: [
         "Creates dramatic visual interest in hours",
         "Removable nature appeals to hesitant buyers",
@@ -73,7 +64,7 @@ const FastUpgrades = () => {
         "Higher cost per square foot than paint",
         "Can be challenging to remove from improperly prepared surfaces",
       ],
-      link: "https://www.amazon.com/Tomete-Geometric-Wallpaper-Self-Adhesive-Waterproof/dp/B0DD421TH7/ref=sr_1_2_sspa?crid=LCLHB6LTSTOY&dib=eyJ2IjoiMSJ9.r-U4Jt2C900Ety0PTAh4Vs2oV_npe0E4sgBk4MEOvqhVCjpfr_ygPXhux6BQW-NMjfu8mIPDQ_-f99OM56oU8s860ZP7SVrTEq2PDsG5YjG7eOAUiBXp-nM4SWLgkpfZzGDz4-CL9NZ4UneCudKzZ_wU0j8kPU1wsGwxkChyNuFw6nIEbUS0OrT_V4-AsX7Hsd-urOtyDKVKPUJFd9QRpYzCvKTrRGoz-N2P3K71pB8.QelKdWZciQMpx6byG9nebDCHS2hLlve1Xgg5l1TQxjw&dib_tag=se&keywords=Peel+and+Stick+Geometric+Hexagon+Wallpaper&qid=1743776141&sprefix=peel+and+stick+geometric+hexagon+wallpaper%2Caps%2C129&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1",
+      link: "https://amzn.to/4lgRL0x",
     },
     {
       id: 4,
@@ -81,9 +72,6 @@ const FastUpgrades = () => {
       title: "Matte Black Square Lever Door Handles (5-pack)",
       description:
         "These contemporary square lever handles in matte black instantly modernize interior doors. The sleek design and smooth operation create a high-end tactile experience that subtly signals quality to potential buyers, while the bulk pack pricing keeps costs manageable across multiple doors.",
-      price: "$89.99",
-      originalPrice: "$129.99",
-      discount: "31% OFF",
       pros: [
         "Simple installation with basic screwdriver",
         "Consistent style throughout the home",
@@ -96,7 +84,7 @@ const FastUpgrades = () => {
         "Lever style not ideal for homes with small children",
         "May require slight adjustments to strike plates",
       ],
-      link: "https://www.amazon.com/Kwikset-Casey-Privacy-Bedroom-Bathroom/dp/B096CGRF12/ref=sr_1_1_sspa?crid=V8SJ1HI2SRHU&dib=eyJ2IjoiMSJ9.BhdIsbrHcKdDTfCy1Caj8RRXvRyPUH-m5_yRGycUHZdkAU5KbaiidDRcgYD8fQxmzbkM0t-MZXifIuQWjPdL8SqEGlTWuvapBldJMoQ9BXHbYvWOMvRlfvF4M0BcBQxNo1yjlIr7asIiD-1lUcaatMaH0Ew8ESmDGN_n4dRzMCNhb3d3YK6Nuq7AwQCl4w5XiTC-3wRBZgFvxtVoOmI-ZiBzc3hlQUw07q_VilcVCYg.o5j_S-rqyFj58uCIoMIG4xjelEU6hAt74mKFYVJUhyE&dib_tag=se&keywords=Matte+Black+Square+Lever+Door+Handles+%285-pack%29&qid=1743776155&sprefix=matte+black+square+lever+door+handles+5-pack+%2Caps%2C124&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1",
+      link: "https://amzn.to/4iToRSp",
     },
     {
       id: 5,
@@ -104,9 +92,6 @@ const FastUpgrades = () => {
       title: "Brushed Brass Cabinet Pulls and Knobs Set",
       description:
         "This comprehensive cabinet hardware set includes both pulls and knobs in a modern brushed brass finish. The warm metallic tone adds instant sophistication to kitchen and bathroom cabinets, while the bulk set pricing makes it economical to update all cabinetry for a cohesive look.",
-      price: "$69.99",
-      originalPrice: "$99.99",
-      discount: "30% OFF",
       pros: [
         "Dramatic before/after transformation for minimal cost",
         "Creates cohesive look throughout cabinets",
@@ -119,7 +104,7 @@ const FastUpgrades = () => {
         "May necessitate filling old hardware holes",
         "Trends in hardware finishes change frequently",
       ],
-      link: "https://www.amazon.com/Ravinte-Kitchen-Cabinet-Dresser-Hardware/dp/B0B74D2ZSN/ref=sr_1_1_sspa?crid=26C3R9K73MZ&dib=eyJ2IjoiMSJ9.BZrucTlfN8wPDQduzV5HN0bSmBZukbQLMbSNJjbs4Og3gRQP2WX6fQTtVHXor9yplle4vzo2ic4V4e40sivcIAxFsFOqoZKUqUFJRxxy7RrtYP6WI_DGirTYpEuErL_Qa9yoFXTyvH4SGM7g_zwfDL3s-qBti8lOYEDSTsFd-5vZBWnYsV3-4Pjs_0iLThpplFmeKk4KVZfde1LrRLZvx7FapuWAqNUdDGOtZeH5eJc.uV_sNDWuudaJRopuhMj_r2i2dEK4WNZFhOYpGnVylqk&dib_tag=se&keywords=Brushed%2BBrass%2BCabinet%2BPulls%2Band%2BKnobs%2BSet&qid=1743776180&sprefix=brushed%2Bbrass%2Bcabinet%2Bpulls%2Band%2Bknobs%2Bset%2Caps%2C99&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1",
+      link: "https://amzn.to/4lmvpuj",
     },
   ];
 
@@ -247,18 +232,6 @@ const FastUpgrades = () => {
                             ))}
                           </ul>
                         </div>
-                      </div>
-
-                      <div className="flex items-center mt-4">
-                        <span className="text-xl font-bold text-primary">
-                          {product.price}
-                        </span>
-                        <span className="ml-2 text-gray-500 line-through text-sm">
-                          {product.originalPrice}
-                        </span>
-                        <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                          {product.discount}
-                        </span>
                       </div>
 
                       <div className="pt-4">

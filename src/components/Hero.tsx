@@ -14,15 +14,12 @@ export const Hero = () => {
             designs, order materials instantly, and communicate plans with
             contractors in minutes
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex justify-center">
             <Link href="/pricing">
               <button className="bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2 transition-all transform hover:scale-105">
                 Get Started <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
-            <button className="bg-white border-2 border-primary text-primary px-8 py-4 rounded-full font-medium hover:bg-primary/5 transition-all">
-              View Designs
-            </button>
           </div>
         </div>
       </div>

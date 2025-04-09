@@ -12,9 +12,6 @@ const BathroomDesign = () => {
       title: "Carrara White Marble Hexagon Mosaic Tile",
       description:
         "Classic hexagon mosaic tiles in genuine Carrara marble that add timeless elegance to any bathroom floor. The natural variation in the stone creates visual interest while maintaining a cohesive look that appeals to a wide range of buyers.",
-      price: "$12.99/sq ft",
-      originalPrice: "$16.99/sq ft",
-      discount: "24% OFF",
       pros: [
         "Timeless appeal that won't go out of style",
         "High perceived value to potential buyers",
@@ -26,7 +23,7 @@ const BathroomDesign = () => {
         "Higher price point than porcelain alternatives",
         "Installation can be more complex than larger tiles",
       ],
-      link: "https://www.homedepot.com/example-tile-link",
+      link: "https://www.lowes.com/pd/SUNWINGS-Carrara-White-11-in-x-12-in-Matte-Composite-Hexagon-Marble-Look-Peel-and-Stick-Wall-Tile-9-35-sq-ft-Carton/5015134557",
     },
     {
       id: 2,
@@ -34,9 +31,6 @@ const BathroomDesign = () => {
       title: "Subway Ceramic White Glossy Wall Tile",
       description:
         "Classic white subway tiles that create a clean, versatile backdrop for any bathroom style. The bright white finish and glossy texture reflect light, making small bathroom spaces feel larger and more open.",
-      price: "$1.99/sq ft",
-      originalPrice: "$2.99/sq ft",
-      discount: "33% OFF",
       pros: [
         "Universally appealing design that attracts most buyers",
         "Extremely cost-effective for flipping projects",
@@ -48,7 +42,7 @@ const BathroomDesign = () => {
         "Requires regular grout cleaning",
         "Limited visual interest compared to patterned tiles",
       ],
-      link: "https://www.lowes.com/example-subway-tile",
+      link: "https://www.lowes.com/pd/Satori-2-x-8-in-Hudson-Brilliant-White-Glossy-Ceramic-Bullnose-Trim/5014772323",
     },
     {
       id: 3,
@@ -56,9 +50,6 @@ const BathroomDesign = () => {
       title: "Modern Frameless Beveled Bathroom Mirror",
       description:
         "Sleek frameless beveled bathroom mirror that adds a touch of contemporary elegance while maximizing the sense of space. The clean lines and beveled edge create visual interest without competing with other design elements.",
-      price: "$89.99",
-      originalPrice: "$129.99",
-      discount: "31% OFF",
       pros: [
         "Maximizes light and sense of space",
         "Works with any design style from traditional to modern",
@@ -70,7 +61,7 @@ const BathroomDesign = () => {
         "More vulnerable to edge chipping than framed mirrors",
         "May show water spots more readily than framed versions",
       ],
-      link: "https://amzn.to/example-mirror-link",
+      link: "https://amzn.to/4iTppYt",
     },
     {
       id: 4,
@@ -78,9 +69,6 @@ const BathroomDesign = () => {
       title: "3-Light Brushed Nickel Vanity Light",
       description:
         "Versatile three-light vanity fixture with a brushed nickel finish and frosted glass shades that provides even, flattering illumination. The transitional design works well with virtually any bathroom style from traditional to contemporary.",
-      price: "$79.99",
-      originalPrice: "$99.99",
-      discount: "20% OFF",
       pros: [
         "Universal appeal that complements various design styles",
         "Provides excellent task lighting for grooming",
@@ -92,7 +80,7 @@ const BathroomDesign = () => {
         "Limited wow factor compared to statement fixtures",
         "Standard design may not stand out in listing photos",
       ],
-      link: "https://amzn.to/example-light-fixture",
+      link: "https://amzn.to/3DZnySR",
     },
   ];
 
@@ -250,18 +238,6 @@ const BathroomDesign = () => {
                             ))}
                           </ul>
                         </div>
-                      </div>
-
-                      <div className="flex items-center mt-10 mb-8">
-                        <span className="text-2xl font-bold text-primary">
-                          {product.price}
-                        </span>
-                        <span className="ml-3 text-gray-500 line-through text-base">
-                          {product.originalPrice}
-                        </span>
-                        <span className="ml-3 bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded">
-                          {product.discount}
-                        </span>
                       </div>
 
                       <div className="pt-8">

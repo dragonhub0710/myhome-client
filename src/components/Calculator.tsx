@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Button } from "@/src/components/ui/button";
 import { Slider } from "@/src/components/ui/slider";
+import { Button } from "@/src/components/ui/button";
 
 export const Calculator = () => {
   const [firstValue, setFirstValue] = useState([50]);
   const [secondValue, setSecondValue] = useState([500000]);
-  const [percentageRate, setPercentageRate] = useState(0.05);
+  const percentageRate = 0.1; // Fixed at 10%
 
   const calculatedValue = (
     firstValue[0] *
@@ -17,10 +17,6 @@ export const Calculator = () => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-
-  const togglePercentage = () => {
-    setPercentageRate(percentageRate === 0.05 ? 0.1 : 0.05);
-  };
 
   return (
     <div className="py-24 bg-accent">
@@ -68,17 +64,12 @@ export const Calculator = () => {
               <p className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
                 {calculatedValue}
               </p>
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-sm text-gray-600 max-w-2xl">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 max-w-2xl mx-auto">
                   Industry surveys show top flippers believe good design boosts
-                  ARV by at least 5-10%. What you are seeing here is based on a{" "}
-                  {percentageRate * 100}% difference. Click to see the
-                  unrealized profits from a{" "}
-                  {percentageRate === 0.05 ? "10%" : "5%"} value increase.
+                  ARV by at least 10%. What you are seeing here is based on a
+                  10% difference.
                 </p>
-                <Button onClick={togglePercentage} variant="outline">
-                  {percentageRate === 0.05 ? "10%" : "5%"} Difference
-                </Button>
               </div>
             </div>
           </div>

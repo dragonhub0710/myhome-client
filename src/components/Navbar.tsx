@@ -45,7 +45,7 @@ export const Navbar = () => {
 
           <div className="flex items-center space-x-4">
             <Link
-              href="/blog/all"
+              href="/blog"
               className="px-4 py-2 rounded-md hover:bg-slate-50 transition-colors inline-block"
             >
               Blog
