@@ -58,12 +58,14 @@ export function DesignTheme({
   useEffect(() => {
     if (designThemeData.list && designThemeData.list.length > 0) {
       getDesignThemePrices();
+      if (currentStep === 2) {
       designThemeData.list.map((item: { id: string }, idx: number) => {
         if (item.id === projectData.selectedItem.design_theme) {
           setPrevThemeIndex(idx);
           setNewThemeIndex(idx);
         }
       });
+    }
     }
   }, [designThemeData, projectData]);
 
@@ -132,10 +134,14 @@ export function DesignTheme({
         selectedItem: selected[0],
       });
 
+      console.log("Saved design theme:", selected[0].design_theme);
+
       setDesignThemeData({
         ...designThemeData,
         selectedItem: designThemeData.list[newThemeIndex],
       });
+
+
 
       const themeArrayString = JSON.stringify([
         designThemeData.list[newThemeIndex].id,
@@ -224,6 +230,7 @@ export function DesignTheme({
         </div>
         <div className="flex gap-4 pt-4">
           <Button
+            disabled
             onClick={handleGotoPrevStep}
             className="bg-primary text-white hover:bg-blue-700"
           >

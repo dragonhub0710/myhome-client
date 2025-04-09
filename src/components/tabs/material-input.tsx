@@ -36,12 +36,12 @@ export default function MaterialInputTab() {
     },
   };
   const componentsList = [
-    <InputForm
+    <DesignTheme
       key={0}
       setCurrentStep={setCurrentStep}
       currentStep={currentStep}
     />,
-    <DesignTheme
+    <InputForm
       key={1}
       setCurrentStep={setCurrentStep}
       currentStep={currentStep}
