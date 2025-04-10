@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { ProjectCard } from "@/src/components/card/project-card";
-import NewProjectContent from "@/src/components/dialog/new-project";
+import NewProjectDialog from "@/src/components/dialog/new-project";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
 import {
   IN_PROGRESS_PROJECT_LABEL,
@@ -196,13 +196,13 @@ export default function ProjectsPage() {
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="p-10">
-                <DialogHeader className="py-5">
-                  <DialogTitle className="w-full text-3xl flex justify-center">
+              <DialogContent className="w-full max-w-[800px] px-10 py-5">
+                <DialogHeader>
+                  <DialogTitle className="w-full text-3xl mb-10 flex justify-center">
                     Start new project
                   </DialogTitle>
                 </DialogHeader>
-                <NewProjectContent setOpen={setOpenDialog} />
+                <NewProjectDialog setOpen={setOpenDialog} open={openDialog} />
               </DialogContent>
             </Dialog>
           </div>
