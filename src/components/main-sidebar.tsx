@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Folder, Home, LogOut, Settings, User, Brain } from "lucide-react";
+import { Folder, LogOut, Settings, User, Brain } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { authAtom } from "@/src/atoms/authAtom";
 import { supabase } from "@/src/lib/supabase";
@@ -15,7 +15,6 @@ import {
 import { Button } from "@/src/components/ui/button";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: <Home /> },
   { name: "Projects", href: "/projects", icon: <Folder /> },
   { name: "Settings", href: "/settings", icon: <Settings /> },
   { name: "AI Assistant", href: "/assistant", icon: <Brain /> },
