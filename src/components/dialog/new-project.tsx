@@ -1,8 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useAtom, useAtomValue } from "jotai";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { projectAtom } from "@/src/atoms/projectAtom";
 import { authAtom } from "@/src/atoms/authAtom";
 import { supabase } from "@/src/lib/supabase";
 import { useToast } from "@/src/hooks/use-toast";
-import { CreateProject, createProjectSchema } from "@/src/schema/schema";
+import { CreateProjectType, createProjectSchema } from "@/src/schema/schema";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
@@ -21,10 +21,11 @@ const DynamicLottie = dynamic(() => import("react-lottie"), {
 });
 
 type NewProjectProps = {
-  setOpen: (open: boolean) => void;
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function NewProjectContent({ setOpen }: NewProjectProps) {
+export default function NewProjectDialog({ open, setOpen }: NewProjectProps) {
   const { toast } = useToast();
   const auth = useAtomValue(authAtom);
   const [projectList, setProjectList] = useAtom(projectAtom);
@@ -39,20 +40,20 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
     },
   };
 
-  const form = useForm<CreateProject>({
+  const form = useForm<CreateProjectType>({
     resolver: zodResolver(createProjectSchema),
     mode: "onChange",
   });
 
-  const isValid =
-    form.formState.isValid &&
-    form.getValues("name") &&
-    form.getValues("fullBathrooms") &&
-    form.getValues("halfBathrooms") &&
-    form.getValues("livingRooms") &&
-    form.getValues("squareFeet");
+  useEffect(() => {
+    form.setValue("name", "");
+    form.setValue("fullBathrooms", 0);
+    form.setValue("halfBathrooms", 0);
+    form.setValue("livingRooms", 0);
+    form.setValue("squareFeet", 0);
+  }, [open]);
 
-  const handleCreateProject = async (project: CreateProject) => {
+  const handleCreateProject = async (project: CreateProjectType) => {
     setIsLoading(true);
     try {
       const { error: createError } = await supabase.from("projects").insert({
@@ -64,6 +65,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
         square_feet: project.squareFeet,
         design_theme: null,
         room_upgrade: null,
+        answers: null,
         status: IN_PROGRESS_PROJECT_VALUE,
       });
 
@@ -106,74 +108,123 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
           className="space-y-10"
         >
           <div className="space-y-4">
-            <div className="w-full flex-col flex space-y-4">
-              <div className="flex flex-col">
-                <Input
-                  id="name"
-                  placeholder="Project Name"
-                  {...form.register("name")}
-                  className="h-14 w-full bg-white text-base"
-                />
-                {form.formState.errors.name && (
-                  <p className="text-sm mt-[4px] text-destructive">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-              <div className="flex space-x-4">
-                <div className="gap-2">
+            <div className="w-full flex-col flex space-y-5">
+              <div className="flex flex-col px-2 space-y-1">
+                <div className="flex items-center">
+                  <label className="w-[150px] text-base flex">
+                    Project Name
+                  </label>
                   <Input
-                    id="fullBathrooms"
-                    placeholder="# of Full Bathrooms"
-                    {...form.register("fullBathrooms")}
-                    className="h-14 w-full bg-white text-base"
+                    id="name"
+                    placeholder="Please enter project name"
+                    {...form.register("name")}
+                    className="h-12 w-full bg-white text-base"
                   />
-                  {form.formState.errors.fullBathrooms && (
-                    <p className="text-sm mt-[4px] text-destructive">
-                      {form.formState.errors.fullBathrooms.message}
-                    </p>
-                  )}
                 </div>
-                <div className="gap-2">
-                  <Input
-                    id="halfBathrooms"
-                    placeholder="# of Half Bathrooms"
-                    {...form.register("halfBathrooms")}
-                    className="h-14 w-full bg-white text-base"
-                  />
-                  {form.formState.errors.halfBathrooms && (
-                    <p className="text-sm mt-[4px] text-destructive">
-                      {form.formState.errors.halfBathrooms.message}
+                <div className="w-full flex justify-end">
+                  {form.formState.errors.name && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.name.message}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex space-x-4">
-                <div className="gap-2">
-                  <Input
-                    id="livingRooms"
-                    placeholder="# of Living Rooms"
-                    {...form.register("livingRooms")}
-                    className="h-14 w-full bg-white text-base"
-                  />
-                  {form.formState.errors.livingRooms && (
-                    <p className="text-sm mt-[4px] text-destructive">
-                      {form.formState.errors.livingRooms.message}
-                    </p>
-                  )}
+              <div className="flex w-full space-x-4">
+                <div className="w-1/2 px-2 space-y-3">
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <label className="w-[130px] text-base flex justify-end">
+                        Full Bathbrooms
+                      </label>
+                      <Input
+                        id="fullBathrooms"
+                        type="number"
+                        placeholder="# of Full Bathrooms"
+                        {...form.register("fullBathrooms", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-12 w-full flex-1 bg-white text-base"
+                      />
+                    </div>
+                    <div className="w-full flex justify-end">
+                      {form.formState.errors.fullBathrooms && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.fullBathrooms.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <label className="w-[130px] text-base flex justify-end">
+                        Living Rooms
+                      </label>
+                      <Input
+                        id="livingRooms"
+                        type="number"
+                        placeholder="# of Living Rooms"
+                        {...form.register("livingRooms", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-12 w-full flex-1 bg-white text-base"
+                      />
+                    </div>
+                    <div className="w-full flex justify-end">
+                      {form.formState.errors.livingRooms && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.livingRooms.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="gap-2">
-                  <Input
-                    id="squareFeet"
-                    placeholder="Square Feet"
-                    {...form.register("squareFeet")}
-                    className="h-14 w-full bg-white text-base"
-                  />
-                  {form.formState.errors.squareFeet && (
-                    <p className="text-sm mt-[4px] text-destructive">
-                      {form.formState.errors.squareFeet.message}
-                    </p>
-                  )}
+                <div className="w-1/2 px-2 space-y-3">
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <label className="w-[130px] text-base flex justify-end">
+                        Half Bathrooms
+                      </label>
+                      <Input
+                        id="fullBathrooms"
+                        type="number"
+                        placeholder="# of Full Bathrooms"
+                        {...form.register("fullBathrooms", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-12 w-full flex-1 bg-white text-base"
+                      />
+                    </div>
+                    <div className="w-full flex justify-end">
+                      {form.formState.errors.fullBathrooms && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.fullBathrooms.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <label className="w-[130px] text-base flex justify-end">
+                        Square Feet
+                      </label>
+                      <Input
+                        id="squareFeet"
+                        type="number"
+                        placeholder="Square Feet"
+                        {...form.register("squareFeet", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-12 w-full flex-1 bg-white text-base"
+                      />
+                    </div>
+                    <div className="w-full flex justify-end">
+                      {form.formState.errors.squareFeet && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.squareFeet.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -183,7 +234,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
             <div className="w-full flex justify-center">
               <Button
                 type="submit"
-                disabled={isloading || !isValid}
+                disabled={isloading}
                 className="bg-primary rounded-lg h-[42px] w-[192px] text-white"
               >
                 {isloading ? (
@@ -194,10 +245,7 @@ export default function NewProjectContent({ setOpen }: NewProjectProps) {
                     />
                   </div>
                 ) : (
-                  <div className="w-full flex items-center gap-2">
-                    <div className="w-6 h-6 flex items-center justify-center border-2 border-white rounded-lg">
-                      <Plus className="h-4 w-4 text-white" />
-                    </div>
+                  <div className="w-full flex items-center justify-center">
                     Start New Project
                   </div>
                 )}

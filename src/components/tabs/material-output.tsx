@@ -508,12 +508,6 @@ export default function MaterialOutputTab() {
                       Status
                     </TableCell>
                     <TableCell
-                      onClick={() => handleSetSortField("products(lead_time)")}
-                      className="cursor-default min-w-[120px] hover:bg-[#ced2d8]"
-                    >
-                      Lead Time
-                    </TableCell>
-                    <TableCell
                       onClick={() => handleSetSortField("quantity")}
                       className="cursor-pointer hover:bg-[#ced2d8]"
                     >
@@ -621,7 +615,6 @@ export default function MaterialOutputTab() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>{item.products.lead_time}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>
                             {(

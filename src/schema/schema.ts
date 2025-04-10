@@ -62,7 +62,7 @@ export const createProjectSchema = z.object({
   squareFeet: numberSchema,
 });
 
-export type CreateProject = z.infer<typeof createProjectSchema>;
+export type CreateProjectType = z.infer<typeof createProjectSchema>;
 
 export const resetPasswordSchema = z
   .object({

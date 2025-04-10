@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { MainSidebar } from "@/src/components/main-sidebar";
 import AssumptionTab from "@/src/components/tabs/assumption";
-import IntegrationTab from "@/src/components/tabs/integration";
 import ProfileTab from "@/src/components/tabs/profile";
 import {
   Tabs,
@@ -13,12 +12,11 @@ import {
 } from "@/src/components/ui/tabs";
 import { useRouter } from "next/navigation";
 
-const tabValues = ["profile", "assumption", "integrations"];
-const tabLabels = ["Profile", "Assumption Sheet", "Integrations"];
+const tabValues = ["profile", "assumption"];
+const tabLabels = ["Profile", "Assumption Sheet"];
 const tabComponents = [
   <ProfileTab key={tabValues[0]} />,
   <AssumptionTab key={tabValues[1]} />,
-  <IntegrationTab key={tabValues[2]} />,
 ];
 
 export default function HomePage() {
