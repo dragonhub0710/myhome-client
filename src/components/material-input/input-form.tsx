@@ -50,6 +50,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const themeData = useAtomValue(designThemeAtom);
   const questionData = useAtomValue(questionAtom);
   const setProjectData = useSetAtom(projectAtom);
+  const [priceList, setPriceList] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
@@ -79,6 +80,11 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     loadMap();
   }, []);
 
+  useEffect(() => {
+    if (showReview) {
+      getDesignThemePrices();
+    }
+  }, [showReview]);
 
   useEffect(() => {
     if (projectData?.selectedItem) {
@@ -91,6 +97,35 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       setExpandedSections(new Array(headerData.list.length).fill(false));
     }
   }, [headerData]);
+
+    const getDesignThemePrices = async () => {
+      const promises = themeData.list.map(async (item: { id: string }) => {
+        const themeArrayString = JSON.stringify([item.id]);
+        const { data, error } = await supabase
+          .from("products")
+          .select("price, quantity")
+          .filter("themes", "cs", themeArrayString);
+        if (error) throw error;
+
+        let totalPrice = 0;
+
+        if (data && data.length > 0) {
+          for (const product of data) {
+            const price = product.price || 0;
+            const quantity = product.quantity || 0;
+            totalPrice += price * quantity;
+          }
+        }
+        return totalPrice;
+      });
+
+      try {
+        const priceList = await Promise.all(promises);
+        setPriceList(priceList);
+      } catch (error) {
+        console.error("Error fetching design theme prices:", error);
+      }
+    }
 
   const updateAnswer = (questionId: string, answer: string) => {
       setAnswerList((prevAnswers) => {
@@ -150,6 +185,8 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const handleSaveAnswers = async () => {
     try {
       setIsLoading(true);
+
+      // 1. Get the list of answered question IDs
       const questionIdList = answerList.map((item) => item.questionId);
       const { data: questionsData, error: questionsError } = await supabase
         .from("questions")
@@ -157,117 +194,99 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         .in("id", questionIdList);
 
       if (questionsError) throw questionsError;
+      if (!questionsData || questionsData.length === 0) return [];
 
-      if (!questionsData || questionsData.length === 0) {
-        return []; // Return empty array if no questions found
-      }
-
+      // 2. Build productQuantities from answerList
       const productQuantities: { [productId: string]: number } = {};
+
       answerList.forEach((answerItem) => {
-        const question = questionsData.find(
-          (q) => q.id === answerItem.questionId
-        );
+        const question = questionsData.find((q) => q.id === answerItem.questionId);
+        if (!question) return;
 
-        if (question) {
+        try {
           if (question.type === "number") {
-            try {
-              const answerArray = question.answer;
-              if (Array.isArray(answerArray) && answerArray.length === 1) {
-                const quantity = parseInt(answerItem.answer, 10);
-                answerArray[0].products.forEach((productId: string) => {
-                  if (!productQuantities[productId]) {
-                    productQuantities[productId] = quantity;
-                  } else {
-                    productQuantities[productId] += quantity;
-                  }
-                });
-              } else {
-                console.error(
-                  "Invalid 'number' question answer format:",
-                  question.answer
-                );
-              }
-            } catch (error) {
-              console.error("Error parsing 'number' question answer:", error);
-            }
+            const quantity = parseInt(answerItem.answer, 10);
+            const productIds = question.answer?.[0]?.products || [];
+            productIds.forEach((productId: string) => {
+              productQuantities[productId] = (productQuantities[productId] || 0) + quantity;
+            });
           } else if (question.type === "options") {
-            try {
-              const options = question.answer;
-
-              if (Array.isArray(options)) {
-                const selectedOption = options.find(
-                  (option) => option.id === answerItem.answer
-                );
-
-                if (selectedOption && Array.isArray(selectedOption.products)) {
-                  selectedOption.products.forEach((productId: string) => {
-                    if (!productQuantities[productId]) {
-                      productQuantities[productId] =
-                        (productQuantities[productId] || 0) + 1;
-                    } else {
-                      productQuantities[productId] += 1;
-                    }
-                  });
-                }
-              } else {
-                console.error(
-                  "The answer column is not in the expected format."
-                );
-              }
-            } catch (error) {
-              console.error("Error parsing question answer:", error);
-            }
+            const options = question.answer || [];
+            const selectedOption = options.find(
+              (option) => option.id === answerItem.answer
+            );
+            const products = selectedOption?.products || [];
+            products.forEach((productId: string) => {
+              productQuantities[productId] = (productQuantities[productId] || 0) + 1;
+            });
           }
+        } catch (error) {
+          console.error("Error processing answer:", error);
         }
       });
 
+      // 3. Build the list of products to insert or update
+      const projectId = projectData.selectedItem.id;
       const productList = Object.entries(productQuantities).map(
         ([productId, quantity]) => ({
           product_id: productId,
           quantity,
           phase: "1",
-          project_id: projectData.selectedItem.id,
+          project_id: projectId,
           status: STATUS_INCOMPLETE_VALUE,
         })
       );
-      if (productList && productList.length > 0) {
-        productList.forEach(async (item) => {
-          // Check if the product already exists
-          const { data: existingProduct, error: fetchError } = await supabase
-            .from("project_products")
-            .select("quantity")
-            .eq("product_id", item.product_id)
-            .eq("project_id", item.project_id);
 
-          if (fetchError) throw fetchError;
+      // 4. Optimize: fetch all existing project products once
+      const { data: existingProducts, error: fetchError } = await supabase
+        .from("project_products")
+        .select("product_id, quantity")
+        .eq("project_id", projectId);
 
-          if (existingProduct) {
-            // If the product exists, update its quantity
-            const newQuantity = item.quantity;
-            const { error: updateError } = await supabase
-              .from("project_products")
-              .update({ quantity: newQuantity })
-              .eq("product_id", item.product_id)
-              .eq("project_id", item.project_id);
+      if (fetchError) throw fetchError;
 
-            if (updateError) throw updateError;
-          } else {
-            // If the product does not exist, insert it
-            const { error: insertError } = await supabase
-              .from("project_products")
-              .insert(item);
+      const existingMap = new Map(
+        (existingProducts || []).map((p) => [p.product_id, p.quantity])
+      );
 
-            if (insertError) throw insertError;
-          }
-        });
+      const inserts = [];
+      const updates = [];
+
+      for (const item of productList) {
+        if (existingMap.has(item.product_id)) {
+          updates.push(item); // Or add to existing quantity if needed
+        } else {
+          inserts.push(item);
+        }
       }
 
+      // 5. Insert new products
+      if (inserts.length > 0) {
+        const { error: insertError } = await supabase
+          .from("project_products")
+          .insert(inserts);
+        if (insertError) throw insertError;
+      }
+
+      // 6. Update existing products
+      for (const updateItem of updates) {
+        const { error: updateError } = await supabase
+          .from("project_products")
+          .update({ quantity: updateItem.quantity })
+          .eq("product_id", updateItem.product_id)
+          .eq("project_id", updateItem.project_id);
+        if (updateError) throw updateError;
+      }
+
+      // 7. Save the answers
       const answers = answerList.filter((answer: any) => answer.answer !== "");
-      const { data, error } = await supabase
+      const { error: updateProjectError } = await supabase
         .from("projects")
         .update({ answers })
-        .eq("id", projectData.selectedItem.id);
-      if (error) throw error;
+        .eq("id", projectId);
+
+      if (updateProjectError) throw updateProjectError;
+
       setProjectData((prev) => {
         if (!prev?.selectedItem) return prev;
         return {
@@ -280,17 +299,17 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       });
 
       toast({ title: "Answers saved successfully!" });
-      return;
     } catch (err) {
       console.log(err);
       toast({
-        title: "Something wrong",
+        title: "Something went wrong",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   if (!headerData?.list || !questionData?.list || headerData.list.length === 0) {
     return <div className="p-6">Loading form...</div>;
@@ -311,54 +330,62 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             {showReview ? "Review" : `Category ${currentCategoryIndex + 1}/${headerData.list.length}`}
           </p>
         </div>
-        {!showReview && (
-          <Button onClick={handleGotoReview} className="bg-gray-300 hover:bg-gray-400">
-            Jump to Review
-          </Button>
-        )}
+        {showReview ? (
+            <Button
+              onClick={() => goToCategory(0)} // or scroll to the full form view
+              className="bg-[#2365C8] text-white hover:bg-blue-700"
+            >
+              Go to Full Category Form
+            </Button>
+          ) : (
+            <Button onClick={handleGotoReview} className="bg-[#2365C8] text-white hover:bg-blue-700">
+              Jump to Review
+            </Button>
+          )}
       </div>
 
       {!showReview && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium">{currentHeader.name}</h2>
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  {currentQuestions.map((question: any, index: number) => {
-    const answer = answerList.find((a: any) => a.questionId === question.id)?.answer || "";
-    return (
-      <div key={index} className="flex items-center space-x-4">
-        <p className="w-1/2 text-sm">{question.question}</p>
-        {question.type === "options" ? (
-          <Select value={answer} onValueChange={(val) => updateAnswer(question.id, val)}>
-            <SelectTrigger className="max-w-[200px] bg-white text-black border border-gray-300 shadow-sm" >
-              <SelectValue placeholder="Select an answer" />
-            </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-md z-50">
-              {question.answer
-                ?.filter((opt: any) => {
-                  if (!selectedThemeId) return true;
-                  if (!opt.themes || opt.themes.length === 0) return true;
-                  return opt.themes.includes(selectedThemeId);
-                })
-                .map((opt: any, idx: number) => (
-                  <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            type="number"
-            value={answer}
-            onChange={(e) => updateAnswer(question.id, e.target.value)}
-            className="max-w-[200px]"
-          />
-        )}
-      </div>
-    );
-  })}
-</div>
+        <div className="space-y-4 flex flex-col min-h-[70vh] justify-between">
+          <div>
+            <h2 className="text-lg font-medium">{currentHeader.name}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {currentQuestions.map((question: any, index: number) => {
+                const answer = answerList.find((a: any) => a.questionId === question.id)?.answer || "";
+                return (
+                  <div key={index} className="flex items-center space-x-4">
+                    <p className="w-1/2 text-sm">{question.question}</p>
+                    {question.type === "options" ? (
+                      <Select value={answer} onValueChange={(val) => updateAnswer(question.id, val)}>
+                        <SelectTrigger className="max-w-[200px] bg-white text-black border border-gray-300 shadow-sm">
+                          <SelectValue placeholder="Select an answer" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border border-gray-200 shadow-md z-50">
+                          {question.answer
+                            ?.filter((opt: any) => {
+                              if (!selectedThemeId) return true;
+                              if (!opt.themes || opt.themes.length === 0) return true;
+                              return opt.themes.includes(selectedThemeId);
+                            })
+                            .map((opt: any, idx: number) => (
+                              <SelectItem key={idx} value={opt.id}>{opt.text}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type="number"
+                        value={answer}
+                        onChange={(e) => updateAnswer(question.id, e.target.value)}
+                        className="max-w-[200px]"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between pt-6">
             <div className="flex gap-2">
               <Button
                 disabled={currentCategoryIndex === 0}
@@ -374,40 +401,45 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                 {currentCategoryIndex === headerData.list.length - 1 ? "Finish" : "Next Category"}
               </Button>
             </div>
-            <Button
-              onClick={handleSaveAnswers}
-              className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
-            >
-              {isLoading ? (
-                <div className="w-6 h-6">
-                  <DynamicLottie options={{ loop: true, autoplay: true, animationData: Loading_Animation }} isClickToPauseDisabled={true} />
-                </div>
-              ) : (
-                <span>Save Changes</span>
-              )}
-            </Button>
 
+            <div className="flex gap-2 items-center">
+              <AssistantPopup
+                onSuggestion={(data) => {
+                  Object.entries(data).forEach(([key, value]) => {
+                    const questionId = keyToIdMap[key] || key;
+                    if (questionId) {
+                      updateAnswer(questionId, String(value));
+                      console.log(`✅ Updated ${questionId} with value: ${value}`);
+                    } else {
+                      console.warn(`❌ No question ID found for assistant key: ${key}`);
+                    }
+                  });
+                }}
+              />
+              <Button
+                onClick={handleSaveAnswers}
+                className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
+              >
+                {isLoading ? (
+                  <div className="w-6 h-6">
+                    <DynamicLottie
+                      options={{ loop: true, autoplay: true, animationData: Loading_Animation }}
+                      isClickToPauseDisabled={true}
+                    />
+                  </div>
+                ) : (
+                  <span>Save Changes</span>
+                )}
+              </Button>
+            </div>
           </div>
-      <AssistantPopup
-        onSuggestion={(data) => {
-          Object.entries(data).forEach(([key, value]) => {
-            const questionId = keyToIdMap[key] || key; // fallback to raw key if UUID already
-            if (questionId) {
-              updateAnswer(questionId, String(value));
-              console.log(`✅ Updated ${questionId} with value: ${value}`);
-            } else {
-              console.warn(`❌ No question ID found for assistant key: ${key}`);
-            }
-          });
-        }}
-      />
         </div>
       )}
 
       {showReview && (
         <div className="space-y-4">
-         {headerData.list.map((item: any, idx: number) => {
-           const questions = questionData.list.filter((q: any) => q.header === item.id);
+          {headerData.list.map((item: any, idx: number) => {
+            const questions = questionData.list.filter((q: any) => q.header === item.id);
             return (
               <div key={idx} className="w-full space-y-[2px]">
                 <button
@@ -429,7 +461,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                           <div className="w-full flex justify-end flex-1">
                             {question.type === "options" ? (
                               <Select value={answer} onValueChange={(value) => updateAnswer(question.id, value)}>
-                               <SelectTrigger className="max-w-[400px] bg-white text-black border border-gray-300">
+                                <SelectTrigger className="max-w-[400px] bg-white text-black border border-gray-300">
                                   <SelectValue placeholder="Select an answer" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
@@ -471,55 +503,66 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             );
           })}
 
-        <div className="flex justify-end pt-6 gap-2">
+          {themeData.list.length > 0 && (
+            <div className="bg-white border rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold mb-2">Design Theme Costs</h3>
+              {priceList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Loading product data...</p>
+              ) : (
+                priceList.map((total, idx) => (
+                  <div key={themeData.list[idx].id} className="text-sm text-gray-700">
+                    {themeData.list[idx].name}: ${total.toFixed(2)}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end pt-6 gap-2">
             <Button
-                        onClick={handleGotoPrevStep}
-                        className="bg-[#2365C8] text-white hover:bg-blue-700"
-                      >
-                        Previous Step
-                      </Button>
+              onClick={handleGotoPrevStep}
+              className="bg-[#2365C8] text-white hover:bg-blue-700"
+            >
+              Previous Step
+            </Button>
             <Button
               onClick={handleGotoNextStep}
               className="bg-[#2365C8] text-white hover:bg-blue-700"
-               >
+            >
               Next Step
-              </Button>
+            </Button>
 
-          <AssistantPopup
-            onSuggestion={(data) => {
-              Object.entries(data).forEach(([key, value]) => {
-                const questionId = keyToIdMap[key] || key;
-                if (questionId) {
-                  updateAnswer(questionId, String(value));
-                  console.log(`✅ Updated ${questionId} with value: ${value}`);
-                } else {
-                  console.warn(`❌ No question ID found for assistant key: ${key}`);
-                }
-              });
-            }}
-          />
+            <AssistantPopup
+              onSuggestion={(data) => {
+                Object.entries(data).forEach(([key, value]) => {
+                  const questionId = keyToIdMap[key] || key;
+                  if (questionId) {
+                    updateAnswer(questionId, String(value));
+                    console.log(`✅ Updated ${questionId} with value: ${value}`);
+                  } else {
+                    console.warn(`❌ No question ID found for assistant key: ${key}`);
+                  }
+                });
+              }}
+            />
 
-          <Button
-            onClick={handleSaveAnswers}
-            className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <div className="w-6 h-6">
-                <DynamicLottie
-                  options={LoadingOptions}
-                  isClickToPauseDisabled={true}
-                />
-              </div>
-            ) : (
-              <span>Save Changes</span>
-            )}
-          </Button>
+            <Button
+              onClick={handleSaveAnswers}
+              className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
+            >
+              {isLoading ? (
+                <div className="w-6 h-6">
+                  <DynamicLottie
+                    options={LoadingOptions}
+                    isClickToPauseDisabled={true}
+                  />
+                </div>
+              ) : (
+                <span>Save Changes</span>
+              )}
+            </Button>
+          </div>
         </div>
-
-        </div>
-
       )}
     </div>
   );
-}
-

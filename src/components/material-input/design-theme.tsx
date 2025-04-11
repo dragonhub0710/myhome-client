@@ -171,7 +171,7 @@ export function DesignTheme({
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-semibold">Design Themes</h1>
-            <p className="text-sm text-muted-foreground">STEP 2/3</p>
+            <p className="text-sm text-muted-foreground">STEP 1/3</p>
           </div>
           <Button
             onClick={handleSaveChanges}
@@ -215,9 +215,7 @@ export function DesignTheme({
                       >
                         <ImageCarousel images={item.images} />
                         <div className="absolute bottom-2 right-2">
-                          <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">
-                            ${priceList[idx] || 0}
-                          </div>
+                          <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">                          </div>
                         </div>
                       </div>
                       <p className="text-lg font-medium">{item.name}</p>
