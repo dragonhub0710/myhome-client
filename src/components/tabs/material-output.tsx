@@ -166,20 +166,22 @@ export default function MaterialOutputTab() {
     }
   }, [projectData.selectedItem, getAllProjectProducts]);
 
-  const handleMovePhase = () => {
+  const handleMovePhase = async () => {
     try {
       setIsPhaseLoading(true);
-      checkboxValues.map(async (item, index) => {
-        if (item) {
-          const { error } = await supabase
-            .from("project_products")
-            .update({
-              phase: productList[index].phase === PHASE_1 ? PHASE_2 : PHASE_1,
-            })
-            .eq("id", productList[index].id);
-          if (error) throw error;
-        }
-      });
+      await Promise.all(
+        checkboxValues.map(async (item, index) => {
+          if (item) {
+            const { error } = await supabase
+              .from("project_products")
+              .update({
+                phase: productList[index].phase === PHASE_1 ? PHASE_2 : PHASE_1,
+              })
+              .eq("id", productList[index].id);
+            if (error) throw error;
+          }
+        })
+      );
       getAllProjectProducts();
       setOpenMovePhaseMenu(false);
       setMovePhaseDisabled(true);
@@ -207,25 +209,27 @@ export default function MaterialOutputTab() {
     setProductList(list);
   };
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     try {
       setIsStatusLoading(true);
-      checkboxValues.map(async (item: boolean, idx: number) => {
-        if (item) {
-          const { error } = await supabase
-            .from("project_products")
-            .update({
-              status: productList[idx].status,
-            })
-            .eq("id", productList[idx].id);
-          if (error) throw error;
-          getAllProjectProducts();
-          setOpenMovePhaseMenu(false);
-          setMovePhaseDisabled(true);
-          setUpdateStatusDisabled(true);
-          setCheckboxValues(new Array(productList.length).fill(false));
-        }
-      });
+      await Promise.all(
+        checkboxValues.map(async (item: boolean, idx: number) => {
+          if (item) {
+            const { error } = await supabase
+              .from("project_products")
+              .update({
+                status: productList[idx].status,
+              })
+              .eq("id", productList[idx].id);
+            if (error) throw error;
+          }
+        })
+      );
+      getAllProjectProducts();
+      setOpenMovePhaseMenu(false);
+      setMovePhaseDisabled(true);
+      setUpdateStatusDisabled(true);
+      setCheckboxValues(new Array(productList.length).fill(false));
     } catch (err) {
       throw err;
     } finally {
