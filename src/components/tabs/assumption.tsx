@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
@@ -23,6 +22,10 @@ export default function AssumptionTab() {
   const auth = useAtomValue(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
+  const [localLVP, setLocalLVP] = useState(0);
+  const [localCabinets, setLocalCabinets] = useState(0);
+  const [overageLVP, setOverageLVP] = useState(0);
+  const [overageTile, setOverageTile] = useState(0);
   const LoadingOptions = {
     loop: true,
     autoplay: true,
@@ -54,20 +57,20 @@ export default function AssumptionTab() {
 
       if (data && data.length > 0) {
         form.setValue("localWindows", data[0].local_windows || 0);
-        form.setValue("localLVP", data[0].local_lvp || 0);
         form.setValue("localStairTreads", data[0].local_stair_treads || 0);
         form.setValue("localInteriorDoors", data[0].local_interior_doors || 0);
-        form.setValue("localCabinets", data[0].local_cabinets || 0);
-        form.setValue("overageTile", data[0].overage_tile || 0);
-        form.setValue("overageLVP", data[0].overage_lvp || 0);
+        setLocalLVP(data[0].local_lvp || 0);
+        setLocalCabinets(data[0].local_cabinets || 0);
+        setOverageLVP(data[0].overage_lvp || 0);
+        setOverageTile(data[0].overage_tile || 0);
       } else {
         form.setValue("localWindows", 0);
-        form.setValue("localLVP", 0);
         form.setValue("localStairTreads", 0);
         form.setValue("localInteriorDoors", 0);
-        form.setValue("localCabinets", 0);
-        form.setValue("overageTile", 0);
-        form.setValue("overageLVP", 0);
+        setLocalLVP(0);
+        setLocalCabinets(0);
+        setOverageLVP(0);
+        setOverageTile(0);
       }
     } catch (err) {
       console.error("Error fetching assumptions:", err);
@@ -76,18 +79,18 @@ export default function AssumptionTab() {
     }
   };
 
-  const handleSaveAssumtion = async (data: any) => {
+  const handleSaveAssumtion = async (data: AssumptionType) => {
     try {
       setIsLoading(true);
       const assumptions = {
         user_id: auth.user.id,
         local_windows: data.localWindows,
-        local_lvp: data.localLVP,
+        local_lvp: localLVP,
         local_stair_treads: data.localStairTreads,
         local_interior_doors: data.localInteriorDoors,
-        local_cabinets: data.localCabinets,
-        overage_tile: data.overageTile,
-        overage_lvp: data.overageLVP,
+        local_cabinets: localCabinets,
+        overage_tile: overageTile,
+        overage_lvp: overageLVP,
       };
 
       const { error } = await supabase
@@ -101,6 +104,44 @@ export default function AssumptionTab() {
       console.error("Error saving assumptions:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLocalLVPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setLocalLVP(value);
+    } else {
+      setLocalLVP(0);
+    }
+  };
+
+  const handleLocalCabinetsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setLocalCabinets(value);
+    } else {
+      setLocalCabinets(0);
+    }
+  };
+
+  const handleOverageTileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setOverageTile(value);
+    } else {
+      setOverageTile(0);
+    }
+  };
+
+  const handleOverageLVPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setOverageLVP(value);
+    } else {
+      setOverageLVP(0);
     }
   };
 
@@ -148,21 +189,13 @@ export default function AssumptionTab() {
                     placeholder="LVP"
                     type="number"
                     disabled={!isEditable}
-                    {...form.register("localLVP", {
-                      valueAsNumber: true,
-                    })}
+                    value={localLVP}
+                    onChange={handleLocalLVPChange}
                     className="h-12 w-full pr-[52px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
                   />
                   <div className="absolute w-[40px] p-0 right-2 top-1/2 -translate-y-1/2">
                     / sqft
                   </div>
-                </div>
-                <div className="w-full flex justify-end">
-                  {form.formState.errors.localLVP && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.localLVP.message}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -227,21 +260,13 @@ export default function AssumptionTab() {
                     placeholder="Cabinets"
                     type="number"
                     disabled={!isEditable}
-                    {...form.register("localCabinets", {
-                      valueAsNumber: true,
-                    })}
+                    value={localCabinets}
+                    onChange={handleLocalCabinetsChange}
                     className="h-12 w-full pr-[100px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
                   />
                   <div className="absolute w-[87px] p-0 right-2 top-1/2 -translate-y-1/2">
                     / linear foot
                   </div>
-                </div>
-                <div className="w-full flex justify-end">
-                  {form.formState.errors.localCabinets && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.localCabinets.message}
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="flex w-full flex-col gap-1"></div>
@@ -262,21 +287,13 @@ export default function AssumptionTab() {
                     placeholder="Tile"
                     type="number"
                     disabled={!isEditable}
-                    {...form.register("overageTile", {
-                      valueAsNumber: true,
-                    })}
+                    value={overageTile}
+                    onChange={handleOverageTileChange}
                     className="h-12 w-full pr-[25px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
                   />
                   <div className="absolute w-[13px] p-0 right-2 top-1/2 -translate-y-1/2">
                     %
                   </div>
-                </div>
-                <div className="w-full flex justify-end">
-                  {form.formState.errors.overageTile && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.overageTile.message}
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="flex w-full flex-col gap-1">
@@ -287,21 +304,13 @@ export default function AssumptionTab() {
                     placeholder="LVP"
                     type="number"
                     disabled={!isEditable}
-                    {...form.register("overageLVP", {
-                      valueAsNumber: true,
-                    })}
+                    value={overageLVP}
+                    onChange={handleOverageLVPChange}
                     className="h-12 w-full pr-[25px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
                   />
                   <div className="absolute w-[13px] p-0 right-2 top-1/2 -translate-y-1/2">
                     %
                   </div>
-                </div>
-                <div className="w-full flex justify-end">
-                  {form.formState.errors.overageLVP && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.overageLVP.message}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
