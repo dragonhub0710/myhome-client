@@ -213,7 +213,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
           } else if (question.type === "options") {
             const options = question.answer || [];
             const selectedOption = options.find(
-              (option) => option.id === answerItem.answer
+              (option: any) => option.id === answerItem.answer
             );
             const products = selectedOption?.products || [];
             products.forEach((productId: string) => {
@@ -566,3 +566,4 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       )}
     </div>
   );
+}
