@@ -9,6 +9,10 @@
   text-align: left;
 }
 
+main {
+  background-color: #f1f7fb;
+}
+
 .logo {
   height: 2em;
   padding: 0;
