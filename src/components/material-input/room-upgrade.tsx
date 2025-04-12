@@ -34,6 +34,15 @@ type MaterialInputProps = {
   setCurrentStep: (currentStep: number) => void;
 };
 
+type RoomUpgrade = {
+  id: string;
+  name?: string;
+  products?: any;
+  locations?: {
+    name: string;
+  };
+};
+
 export function RoomUpgrade({
   currentStep,
   setCurrentStep,
@@ -161,7 +170,7 @@ export function RoomUpgrade({
       }
 
       toast({ title: "Upgrade and its products removed." });
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Error removing upgrade and its products:", err?.message || err);
       toast({
         title: "Error removing upgrade.",
@@ -213,7 +222,13 @@ const handleSaveChanges = async () => {
         (existingProjectProducts || []).map((p) => [p.product_id, p.quantity])
       );
 
-      const productInserts = [];
+      const productInserts: {
+        product_id: string;
+        quantity: number;
+        phase: string;
+        status: string;
+        project_id: string;
+      }[] = [];
 
       fullProducts.forEach((p: any) => {
         const productThemes: string[] = p.themes || [];
@@ -303,7 +318,7 @@ const handleSaveChanges = async () => {
     });
 
     setOpen(false);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error saving:", err);
     toast({
       title: "Error saving.",
@@ -414,8 +429,8 @@ const handleSaveChanges = async () => {
            ) : (
              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
                {roomUpgradeData.list
-                 .filter((upgrade) => addedUpgrades.includes(upgrade.id))
-                 .map((upgrade, idx) => (
+                 .filter((upgrade: RoomUpgrade) => addedUpgrades.includes(upgrade.id))
+                   .map((upgrade: RoomUpgrade, idx: number) => (
                    <li key={idx} className="flex justify-between items-center pr-2">
                      <div>
                        <span className="text-blue-600 font-medium">{upgrade.name}</span>
