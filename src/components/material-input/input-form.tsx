@@ -98,34 +98,57 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     }
   }, [headerData]);
 
-    const getDesignThemePrices = async () => {
-      const promises = themeData.list.map(async (item: { id: string }) => {
-        const themeArrayString = JSON.stringify([item.id]);
-        const { data, error } = await supabase
-          .from("products")
-          .select("price, quantity")
-          .filter("themes", "cs", themeArrayString);
-        if (error) throw error;
+  const getDesignThemePrices = async () => {
+    const projectId = projectData.selectedItem.id;
 
-        let totalPrice = 0;
+    const promises = themeData.list.map(async (theme: { id: string }) => {
+      // Step 1: Get all products attached to the current project
+      const { data: projectProducts, error: ppError } = await supabase
+        .from("project_products")
+        .select("product_id, quantity")
+        .eq("project_id", projectId);
 
-        if (data && data.length > 0) {
-          for (const product of data) {
-            const price = product.price || 0;
-            const quantity = product.quantity || 0;
-            totalPrice += price * quantity;
-          }
+      if (ppError) throw ppError;
+
+      const productIds = projectProducts.map((p) => p.product_id);
+
+      // Step 2: Get products with matching IDs and the specific theme
+      const { data: matchingProducts, error: prodError } = await supabase
+        .from("products")
+        .select("id, price, themes")
+        .in("id", productIds);
+
+      if (prodError) throw prodError;
+
+      let totalPrice = 0;
+
+      for (const product of matchingProducts) {
+        const productThemes = product.themes || [];
+
+        const matchesTheme =
+          Array.isArray(productThemes) && productThemes.includes(theme.id);
+
+        if (matchesTheme) {
+          const quantityObj = projectProducts.find(
+            (p) => p.product_id === product.id
+          );
+          const quantity = quantityObj?.quantity || 0;
+          totalPrice += (product.price || 0) * quantity;
         }
-        return totalPrice;
-      });
-
-      try {
-        const priceList = await Promise.all(promises);
-        setPriceList(priceList);
-      } catch (error) {
-        console.error("Error fetching design theme prices:", error);
       }
+
+      return totalPrice;
+    });
+
+    try {
+      const priceList = await Promise.all(promises);
+      setPriceList(priceList);
+    } catch (error) {
+      console.error("Error fetching design theme prices:", error);
     }
+  };
+
+
 
   const updateAnswer = (questionId: string, answer: string) => {
       setAnswerList((prevAnswers) => {
@@ -186,7 +209,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     try {
       setIsLoading(true);
 
-      // 1. Get the list of answered question IDs
+      // 1. Get answered question IDs
       const questionIdList = answerList.map((item) => item.questionId);
       const { data: questionsData, error: questionsError } = await supabase
         .from("questions")
@@ -196,8 +219,13 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       if (questionsError) throw questionsError;
       if (!questionsData || questionsData.length === 0) return [];
 
-      // 2. Build productQuantities from answerList
+      // 2. Get current project theme
+      const projectId = projectData.selectedItem.id;
+      const currentProjectThemeId = projectData.selectedItem.design_theme || null;
+
+      // 3. Collect all product IDs from answers
       const productQuantities: { [productId: string]: number } = {};
+      const referencedProductIds = new Set<string>();
 
       answerList.forEach((answerItem) => {
         const question = questionsData.find((q) => q.id === answerItem.questionId);
@@ -206,18 +234,39 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         try {
           if (question.type === "number") {
             const quantity = parseInt(answerItem.answer, 10);
-            const productIds = question.answer?.[0]?.products || [];
-            productIds.forEach((productId: string) => {
-              productQuantities[productId] = (productQuantities[productId] || 0) + quantity;
+            const productObjs = question.answer?.[0]?.products || [];
+
+            productObjs.forEach((p: any) => {
+              const productId = p.productId || p.id;
+              const themePath = p.themePath || null;
+
+              const isThemeCompatible =
+                !currentProjectThemeId || !themePath || themePath === currentProjectThemeId;
+
+              if (productId && isThemeCompatible) {
+                productQuantities[productId] = (productQuantities[productId] || 0) + quantity;
+                referencedProductIds.add(productId);
+              }
             });
+
           } else if (question.type === "options") {
             const options = question.answer || [];
             const selectedOption = options.find(
               (option: any) => option.id === answerItem.answer
             );
             const products = selectedOption?.products || [];
-            products.forEach((productId: string) => {
-              productQuantities[productId] = (productQuantities[productId] || 0) + 1;
+
+            products.forEach((p: any) => {
+              const productId = p.productId || p.id;
+              const themePath = p.themePath || null;
+
+              const isThemeCompatible =
+                !currentProjectThemeId || !themePath || themePath === currentProjectThemeId;
+
+              if (productId && isThemeCompatible) {
+                productQuantities[productId] = (productQuantities[productId] || 0) + 1;
+                referencedProductIds.add(productId);
+              }
             });
           }
         } catch (error) {
@@ -225,19 +274,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         }
       });
 
-      // 3. Build the list of products to insert or update
-      const projectId = projectData.selectedItem.id;
-      const productList = Object.entries(productQuantities).map(
-        ([productId, quantity]) => ({
-          product_id: productId,
-          quantity,
-          phase: "1",
-          project_id: projectId,
-          status: STATUS_INCOMPLETE_VALUE,
-        })
-      );
-
-      // 4. Optimize: fetch all existing project products once
+      // 4. Fetch existing project products
       const { data: existingProducts, error: fetchError } = await supabase
         .from("project_products")
         .select("product_id, quantity")
@@ -245,6 +282,39 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
 
       if (fetchError) throw fetchError;
 
+      const existingProductIds = (existingProducts || []).map((p) => p.product_id);
+
+      // 5. Fetch full product info for existing ones
+      const { data: fullExistingProducts, error: productThemeError } = await supabase
+        .from("products")
+        .select("id, themes")
+        .in("id", existingProductIds);
+
+      if (productThemeError) throw productThemeError;
+
+      // 6. Filter products to remove (wrong theme)
+      const productsToRemove = fullExistingProducts.filter((prod: any) => {
+        const productThemes = prod.themes || [];
+        if (!Array.isArray(productThemes) || productThemes.length === 0) return false; // keep unthemed
+        return !productThemes.includes(currentProjectThemeId); // remove if theme mismatch
+      });
+
+
+      // 7. Delete incompatible products
+      if (productsToRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("project_products")
+          .delete()
+          .in(
+            "product_id",
+            productsToRemove.map((p: any) => p.id)
+          )
+          .eq("project_id", projectId);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 8. Build insert/update lists
       const existingMap = new Map(
         (existingProducts || []).map((p) => [p.product_id, p.quantity])
       );
@@ -252,15 +322,21 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       const inserts = [];
       const updates = [];
 
-      for (const item of productList) {
-        if (existingMap.has(item.product_id)) {
-          updates.push(item); // Or add to existing quantity if needed
+      for (const [productId, quantity] of Object.entries(productQuantities)) {
+        if (existingMap.has(productId)) {
+          updates.push({ product_id: productId, quantity, project_id: projectId });
         } else {
-          inserts.push(item);
+          inserts.push({
+            product_id: productId,
+            quantity,
+            phase: "1",
+            project_id: projectId,
+            status: STATUS_INCOMPLETE_VALUE,
+          });
         }
       }
 
-      // 5. Insert new products
+      // 9. Insert new products
       if (inserts.length > 0) {
         const { error: insertError } = await supabase
           .from("project_products")
@@ -268,7 +344,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         if (insertError) throw insertError;
       }
 
-      // 6. Update existing products
+      // 10. Update existing products
       for (const updateItem of updates) {
         const { error: updateError } = await supabase
           .from("project_products")
@@ -278,7 +354,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         if (updateError) throw updateError;
       }
 
-      // 7. Save the answers
+      // 11. Save answers to project
       const answers = answerList.filter((answer: any) => answer.answer !== "");
       const { error: updateProjectError } = await supabase
         .from("projects")
@@ -287,6 +363,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
 
       if (updateProjectError) throw updateProjectError;
 
+      // 12. Update local state
       setProjectData((prev) => {
         if (!prev?.selectedItem) return prev;
         return {
@@ -300,7 +377,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
 
       toast({ title: "Answers saved successfully!" });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast({
         title: "Something went wrong",
         variant: "destructive",
@@ -309,6 +386,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       setIsLoading(false);
     }
   };
+
 
 
   if (!headerData?.list || !questionData?.list || headerData.list.length === 0) {

@@ -64,7 +64,6 @@ export default function NewProjectDialog({ open, setOpen }: NewProjectProps) {
         living_rooms: project.livingRooms,
         square_feet: project.squareFeet,
         design_theme: null,
-        room_upgrade: null,
         answers: null,
         status: IN_PROGRESS_PROJECT_VALUE,
       });
@@ -134,7 +133,7 @@ export default function NewProjectDialog({ open, setOpen }: NewProjectProps) {
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center space-x-2">
                       <label className="w-[130px] text-base flex justify-end">
-                        Full Bathbrooms
+                        Full Bathrooms
                       </label>
                       <Input
                         id="fullBathrooms"
