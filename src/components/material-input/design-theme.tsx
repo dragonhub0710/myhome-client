@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
- /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
@@ -15,14 +15,13 @@ import { roomUpgradeAtom } from "@/src/atoms/roomupgradeAtom";
 import { authAtom } from "@/src/atoms/authAtom";
 import { ImageCarousel } from "@/src/components/image-gallery";
 
-const DynamicLottie = dynamic(() => import("react-lottie"), {
-  ssr: false,
-});
+const DynamicLottie = dynamic(() => import("react-lottie"), { ssr: false });
 
 interface DesignThemeProps {
   images: string[];
   name: string;
   description: string;
+  id: string;
 }
 
 type MaterialInputProps = {
@@ -30,20 +29,18 @@ type MaterialInputProps = {
   setCurrentStep: (currentStep: number) => void;
 };
 
-export function DesignTheme({
-  currentStep,
-  setCurrentStep,
-}: MaterialInputProps) {
+export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps) {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const auth = useAtomValue(authAtom);
   const [projectData, setProjectData] = useAtom(projectAtom);
   const [roomUpgradeData, setRoomUpgradeData] = useAtom(roomUpgradeAtom);
   const [designThemeData, setDesignThemeData] = useAtom(designThemeAtom);
-  const [prevThemeIndex, setPrevThemeIndex] = useState(0);
-  const [newThemeIndex, setNewThemeIndex] = useState(0);
+  const [prevThemeIndex, setPrevThemeIndex] = useState<number | null>(null);
+  const [newThemeIndex, setNewThemeIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [priceList, setPriceList] = useState<number[]>([]);
+
   const LoadingOptions = {
     loop: true,
     autoplay: true,
@@ -54,23 +51,26 @@ export function DesignTheme({
   };
 
   useEffect(() => {
-    if (designThemeData.list && designThemeData.list.length > 0) {
+    if (
+      designThemeData.list &&
+      designThemeData.list.length > 0 &&
+      projectData.selectedItem?.design_theme
+    ) {
+      const currentThemeIndex = designThemeData.list.findIndex(
+        (item: any) => item.id === projectData.selectedItem?.design_theme
+      );
+
+      setPrevThemeIndex(currentThemeIndex);
+      setNewThemeIndex(currentThemeIndex);
     }
-  }, [designThemeData, projectData]);
+  }, [designThemeData, projectData.selectedItem?.design_theme]);
+
 
   useEffect(() => {
     if (designThemeData.list && designThemeData.list.length > 0) {
       getDesignThemePrices();
-      if (currentStep === 2) {
-      designThemeData.list.map((item: { id: string }, idx: number) => {
-        if (item.id === projectData.selectedItem.design_theme) {
-          setPrevThemeIndex(idx);
-          setNewThemeIndex(idx);
-        }
-      });
     }
-    }
-  }, [designThemeData, projectData]);
+  }, [designThemeData]);
 
   const getDesignThemePrices = async () => {
     const promises = designThemeData.list.map(async (item: { id: string }) => {
@@ -82,7 +82,6 @@ export function DesignTheme({
       if (error) throw error;
 
       let totalPrice = 0;
-
       if (data && data.length > 0) {
         for (const product of data) {
           const price = product.price || 0;
@@ -101,68 +100,57 @@ export function DesignTheme({
     }
   };
 
-  const handleGotoPrevStep = () => {
-    setCurrentStep(currentStep - 1);
-  };
-
   const handleGotoNextStep = () => {
     setCurrentStep(currentStep + 1);
   };
 
-  const handleSaveChanges = async () => {
-    if (!designThemeData.list || designThemeData.list.length === 0) return;
+  const handleSaveThemeImmediately = async (idx: number) => {
     try {
       setIsLoading(true);
+      const selectedTheme = designThemeData.list[idx];
+
       const { error: updateError } = await supabase
         .from("projects")
-        .update({ design_theme: designThemeData.list[newThemeIndex].id })
+        .update({ design_theme: selectedTheme.id })
         .eq("id", projectData.selectedItem.id);
       if (updateError) throw updateError;
 
-      const { data: selected, error: selectedError } = await supabase
+      const { data: selected } = await supabase
         .from("projects")
         .select("*")
         .eq("id", projectData.selectedItem.id);
-      if (selectedError) throw selectedError;
 
-      const { data: projects, error: projectsError } = await supabase
+      const { data: projects } = await supabase
         .from("projects")
         .select("*")
         .eq("user_id", auth.user?.id);
-      if (projectsError) throw projectsError;
 
       setProjectData({
         ...projectData,
         list: projects,
-        selectedItem: selected[0],
+        selectedItem: selected?.[0],
       });
-
-      console.log("Saved design theme:", selected[0].design_theme);
 
       setDesignThemeData({
         ...designThemeData,
-        selectedItem: designThemeData.list[newThemeIndex],
+        selectedItem: selectedTheme,
       });
 
+    console.log("✅ Selected Design Theme:", selectedTheme.name, selectedTheme.id);
 
-
-      const themeArrayString = JSON.stringify([
-        designThemeData.list[newThemeIndex].id,
-      ]);
-      const { data: rows, error } = await supabase
+      const themeArrayString = JSON.stringify([selectedTheme.id]);
+      const { data: upgrades, error } = await supabase
         .from("upgrades")
-        .select(`*, locations(name)`)
+        .select("*, locations(name)")
         .filter("themes", "cs", themeArrayString)
         .order("name", { ascending: true });
       if (error) throw error;
 
-      setRoomUpgradeData({ ...roomUpgradeData, list: rows });
+      setRoomUpgradeData({ ...roomUpgradeData, list: upgrades });
+      toast({ title: `${selectedTheme.name} selected.` });
     } catch (err) {
       console.error("Error saving theme:", err);
-      toast({
-        title: "Error saving theme.",
-        variant: "destructive",
-      });
+      toast({ title: "Failed to save theme.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -176,71 +164,45 @@ export function DesignTheme({
             <h1 className="text-2xl font-semibold">Design Themes</h1>
             <p className="text-sm text-muted-foreground">STEP 1/3</p>
           </div>
-          <Button
-            onClick={handleSaveChanges}
-            className="w-36 bg-primary text-white hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <div className="w-12 h-12">
-                <DynamicLottie
-                  options={LoadingOptions}
-                  isClickToPauseDisabled={true}
-                />
-              </div>
-            ) : (
-              <p>Save Changes</p>
-            )}
-          </Button>
         </div>
 
         <div className="w-full relative space-y-2">
           <div className="flex space-x-5">
             {designThemeData.list &&
               designThemeData.list.length > 0 &&
-              designThemeData.list.map(
-                (item: DesignThemeProps, idx: number) => {
-                  const isPrevTheme = prevThemeIndex === idx;
-                  const isSelected = newThemeIndex === idx;
-                  return (
+              designThemeData.list.map((item: DesignThemeProps, idx: number) => {
+                  const isActive = projectData.selectedItem?.design_theme === item.id;
+                return (
+                  <div
+                    key={idx}
+                    className={`w-[190px] h-auto cursor-pointer relative space-y-2`}
+                    onClick={() => {
+                      if (newThemeIndex !== idx) {
+                        setNewThemeIndex(idx);
+                        handleSaveThemeImmediately(idx);
+                      }
+                    }}
+                  >
                     <div
-                      key={idx}
-                      className={`w-[190px] h-auto cursor-default relative space-y-2`}
-                      onClick={() => setNewThemeIndex(idx)}
+                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl border-2 ${
+                        isActive ? "border-primary" : "border-transparent"
+                      }`}
                     >
-                      <div
-                        className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl ${
-                          isPrevTheme
-                            ? "border-primary border-4"
-                            : isSelected
-                            ? "border-primary border-2"
-                            : "border-transparent"
-                        }`}
-                      >
-                        <ImageCarousel images={item.images} />
-                        <div className="absolute bottom-2 right-2">
-                          <div className="w-fit rounded-full bg-[#F1F7FB] px-2 py-1">                          </div>
-                        </div>
-                      </div>
-                      <p className="text-lg font-medium">{item.name}</p>
-                      <p className="text-sm">{item.description}</p>
+                      <ImageCarousel images={item.images} />
                     </div>
-                  );
-                }
-              )}
+                    <p className="text-lg font-medium">{item.name}</p>
+                    <p className="text-sm">{item.description}</p>
+                  </div>
+                );
+              })}
           </div>
         </div>
+
         <div className="flex gap-4 pt-4">
-          <Button
-            disabled
-            onClick={handleGotoPrevStep}
-            className="bg-primary text-white hover:bg-blue-700"
-          >
+          <Button disabled className="bg-primary text-white hover:bg-blue-700">
             Previous Step
           </Button>
-          <Button
-            onClick={handleGotoNextStep}
-            className="bg-primary text-white hover:bg-blue-700"
-          >
+          <Button onClick={handleGotoNextStep} className="bg-primary text-white hover:bg-blue-700">
             Next Step
           </Button>
         </div>

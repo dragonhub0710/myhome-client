@@ -36,6 +36,7 @@ type MaterialInputProps = {
 
 type RoomUpgrade = {
   id: string;
+  image: string;
   name?: string;
   products?: any;
   locations?: {
@@ -359,21 +360,6 @@ const handleSaveChanges = async () => {
             <h1 className="text-2xl font-semibold">Room Upgrades</h1>
             <p className="text-sm text-muted-foreground">STEP 3/3</p>
           </div>
-          <Button
-            onClick={handleSaveChanges}
-            className="w-36 bg-primary text-white hover:bg-blue-700"
-          >
-            {isLoading ? (
-              <div className="w-12 h-12">
-                <DynamicLottie
-                  options={LoadingOptions}
-                  isClickToPauseDisabled={true}
-                />
-              </div>
-            ) : (
-              <p>Save Changes</p>
-            )}
-          </Button>
         </div>
 
         <div className="w-full relative space-y-2">
