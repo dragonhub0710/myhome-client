@@ -39,7 +39,7 @@ export function MainSidebar() {
   };
 
   return (
-    <div className="flex h-full w-60 p-5 bg-sidebar">
+    <div className="flex h-full w-60 p-5 bg-[#F1F7Fb]">
       <div className="flex h-full w-full flex-col p-5 rounded-xl border-[1px] bg-white">
         <Link href={"/"} target="__blank">
           <div className="flex h-16 items-center px-6">

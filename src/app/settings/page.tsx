@@ -47,7 +47,7 @@ export default function HomePage() {
           </div>
           <div className="w-full">
             <Tabs value={currentTab} onValueChange={handleChangeTab}>
-              <TabsList className="mb-6">
+              <TabsList className="mb-6 bg-transparent">
                 {tabValues.map((item, idx) => {
                   return (
                     <TabsTrigger

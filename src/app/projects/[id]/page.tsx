@@ -93,7 +93,7 @@ export default function ProjectDetailPage() {
               onValueChange={handleChangeTab}
               className="h-full flex flex-col"
             >
-              <TabsList className="mb-6 justify-start">
+              <TabsList className="mb-6 justify-start bg-transparent">
                 {tabValues.map((item, idx) => {
                   return (
                     <TabsTrigger
