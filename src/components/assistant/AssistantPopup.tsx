@@ -34,7 +34,7 @@ export function AssistantPopup({ onSuggestion }: AssistantPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [filledKeys, setFilledKeys] = useState<string[]>([]);
   const [groupedQuestions, setGroupedQuestions] = useState<
-    { category: string; questions: { key: string; label: string }[] }[]
+    { category: string; questions: { key: string; label: string; type?: string; answer?: any[] }[] }[]
   >([]);
 
   const recognitionRef = useRef<any>(null);
@@ -43,10 +43,13 @@ export function AssistantPopup({ onSuggestion }: AssistantPopupProps) {
     async function load() {
       const questions = await fetchQuestionsWithHeaders();
 
-      const grouped: Record<string, { key: string; label: string }[]> = {};
-      questions.forEach(({ key, label, category }) => {
+      const grouped: Record<
+        string,
+        { key: string; label: string; type?: string; answer?: any[] }[]
+      > = {};
+        questions.forEach(({ key, label, category, answer, type }) => {
         if (!grouped[category]) grouped[category] = [];
-        grouped[category].push({ key, label });
+        grouped[category].push({ key, label, answer, type });
       });
 
       const sorted = orderedCategories.map((category) => ({
@@ -199,11 +202,19 @@ export function AssistantPopup({ onSuggestion }: AssistantPopupProps) {
             <h2 className="text-lg font-medium">Voice Assistant</h2>
 
             <div className="flex items-center gap-2">
-              <Input
+              <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.currentTarget.style.height = "auto"; // Reset height
+                  e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"; // Resize based on content
+                }}
                 placeholder="Say or describe what you want filled in..."
+                rows={1}
+                className="flex-1 resize-none p-2 border rounded-md text-sm leading-5 overflow-hidden max-h-[200px] min-h-[38px] bg-white shadow-sm"
+                style={{ lineHeight: "1.5", transition: "height 0.2s ease-in-out" }}
               />
+
               <Button onClick={handleVoiceInput} variant="ghost" className="p-2">
                 <Mic className={isListening ? "text-red-500 animate-pulse" : "text-gray-600"} />
               </Button>
