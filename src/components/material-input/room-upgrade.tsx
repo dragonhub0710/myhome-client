@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/src/lib/supabase";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { useToast } from "@/src/hooks/use-toast";
@@ -51,6 +52,7 @@ export function RoomUpgrade({
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const auth = useAtomValue(authAtom);
+  const router = useRouter();
   const [projectData, setProjectData] = useAtom(projectAtom);
   const [roomUpgradeData, setRoomUpgradeData] = useAtom(roomUpgradeAtom);
   const [addedUpgrades, setAddedUpgrades] = useState<string[]>([]);
@@ -102,6 +104,33 @@ export function RoomUpgrade({
 
   const handleGotoPrevStep = () => {
     setCurrentStep(currentStep - 1);
+  };
+
+  const clickMaterialOutputTab = () => {
+    const tryClick = () => {
+      const allTabs = document.querySelectorAll('[role="tab"]');
+
+      for (const tab of allTabs) {
+        if (tab.textContent?.trim() === "Material Output") {
+          (tab as HTMLElement).click();
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    // Try immediately
+    if (tryClick()) return;
+
+    // Otherwise, retry every 100ms up to 2 seconds
+    let attempts = 0;
+    const interval = setInterval(() => {
+      if (tryClick() || attempts > 20) {
+        clearInterval(interval);
+      }
+      attempts++;
+    }, 100);
   };
 
   const fetchAddedUpgrades = async () => {
@@ -446,9 +475,16 @@ const handleSaveChanges = async () => {
           >
             Previous Step
           </Button>
-          <Button disabled className="bg-primary text-white hover:bg-blue-700">
-            Next Step
+          <Button
+            onClick={() => {
+              const projectId = projectData.selectedItem.id;
+              router.push(`/projects`);
+            }}
+            className="bg-primary text-white hover:bg-blue-700"
+          >
+            Complete Material Input
           </Button>
+
         </div>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
