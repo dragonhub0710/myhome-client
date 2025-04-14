@@ -1,8 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import * as XLSX from "xlsx";
@@ -79,10 +78,11 @@ const STATUS_OPTIONS = [
 interface ProductProps {
   image: string;
   link: string;
-  lead_time: number;
   name: string;
   price: number;
+  category: string;
   categories: { name: string };
+  location: string;
   locations: { name: string };
   websites: { name: string };
 }
@@ -110,6 +110,16 @@ interface ExcelProductProps {
   Link: string;
 }
 
+interface CategoryProps {
+  id: string;
+  name: string;
+}
+
+interface LocationProps {
+  id: string;
+  name: string;
+}
+
 export default function MaterialOutputTab() {
   const { toast } = useToast();
   const projectData = useAtomValue(projectAtom);
@@ -122,8 +132,8 @@ export default function MaterialOutputTab() {
   const [sortField, setSortField] = useState("products(name)");
   const [sortDirection, setSortDirection] = useState(true);
   const [checkboxValues, setCheckboxValues] = useState<boolean[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [locations, setLocations] = useState<any[]>([]);
+  const [categories, setCategories] = useState<CategoryProps[]>([]);
+  const [locations, setLocations] = useState<LocationProps[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<boolean[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<boolean[]>([]);
   const [movePhaseDisabled, setMovePhaseDisabled] = useState(true);
@@ -147,13 +157,13 @@ export default function MaterialOutputTab() {
     }));
   };
 
-  const getAllProjectProducts = useCallback(async () => {
+  const getAllProjectProducts = async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from("project_products")
         .select(
-          `*, products(name, image, price, lead_time, link, websites(name), category, categories(name), location, locations(name))`
+          `*, products(name, image, price, link, websites(name), category, categories(name), location, locations(name))`
         )
         .eq("project_id", projectData.selectedItem.id)
         .eq("phase", phase)
@@ -166,14 +176,14 @@ export default function MaterialOutputTab() {
       }
     } catch (err) {
       console.error(err);
-      toast({
+      toast.error({
         title: "Something went wrong",
-        variant: "destructive",
+        description: "Please check your internet connection and try again",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [projectData.selectedItem, phase, sortField, sortDirection, toast]);
+  };
 
   const getAllCategoies = async () => {
     try {
@@ -189,9 +199,9 @@ export default function MaterialOutputTab() {
       }
     } catch (error) {
       console.error(error);
-      toast({
+      toast.error({
         title: "Something went wrong",
-        variant: "destructive",
+        description: "Please check your internet connection and try again",
       });
     } finally {
       setIsLoading(false);
@@ -212,9 +222,9 @@ export default function MaterialOutputTab() {
       }
     } catch (error) {
       console.error(error);
-      toast({
+      toast.error({
         title: "Something went wrong",
-        variant: "destructive",
+        description: "Please check your internet connection and try again",
       });
     } finally {
       setIsLoading(false);
@@ -227,7 +237,7 @@ export default function MaterialOutputTab() {
       getAllCategoies();
       getAllLocations();
     }
-  }, [projectData.selectedItem]);
+  }, [projectData.selectedItem, phase, sortField, sortDirection]);
 
   const handleMovePhase = async () => {
     try {
@@ -252,9 +262,9 @@ export default function MaterialOutputTab() {
       setCheckboxValues(new Array(productList.length).fill(false));
     } catch (err) {
       console.error(err);
-      toast({
-        title: "Something wrong",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again",
       });
     } finally {
       setIsPhaseLoading(false);
@@ -407,12 +417,12 @@ export default function MaterialOutputTab() {
     window.open(redirectLink, "_blank");
   };
 
-  function getASINFromURL(url: string) {
+  const getASINFromURL = async (url: string) => {
     const asinRegex = /(?:dp|gp\/product)\/([A-Z0-9]{10})/;
     const match = url.match(asinRegex);
 
     return match ? match[1] : null;
-  }
+  };
 
   const getSelectedRowsLength = () => {
     return checkboxValues.filter((item) => item).length;
@@ -427,7 +437,7 @@ export default function MaterialOutputTab() {
       const selectedCategoryId = categories[index].id;
       if (productList && productList.length > 0) {
         const checkedlist = [...checkboxValues];
-        productList.map((item: any, idx) => {
+        productList.map((item: ProjectProductProps, idx) => {
           if (item.products.category == selectedCategoryId) {
             checkedlist[idx] = !selectedCategories[index];
             setCheckboxValues(checkedlist);
@@ -443,7 +453,7 @@ export default function MaterialOutputTab() {
       const selectedLocationId = locations[index].id;
       if (productList && productList.length > 0) {
         const checkedlist = [...checkboxValues];
-        productList.map((item: any, idx) => {
+        productList.map((item: ProjectProductProps, idx) => {
           if (item.products.location === selectedLocationId) {
             checkedlist[idx] = !selectedLocations[index];
             setCheckboxValues(checkedlist);
@@ -498,21 +508,26 @@ export default function MaterialOutputTab() {
                     </DropdownMenuLabel>
                     {categories &&
                       categories.length > 0 &&
-                      categories.map((category: any, index: number) => {
-                        const isChecked = !!selectedCategories[index];
-                        return (
-                          <DropdownMenuItem
-                            key={`category-${category.id}`}
-                            onClick={() => selectByProperty("category", index)}
-                            className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
-                          >
-                            {category.name}
-                            <div className="w-5 h-auto">
-                              {isChecked && <Check className="w-4 h-4" />}
-                            </div>
-                          </DropdownMenuItem>
-                        );
-                      })}
+                      categories.map(
+                        (category: CategoryProps, index: number) => {
+                          const isChecked = !!selectedCategories[index];
+                          return (
+                            <DropdownMenuItem
+                              key={`category-${category.id}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                selectByProperty("category", index);
+                              }}
+                              className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
+                            >
+                              {category.name}
+                              <div className="w-5 h-auto">
+                                {isChecked && <Check className="w-4 h-4" />}
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        }
+                      )}
 
                     <DropdownMenuSeparator className="border" />
 
@@ -521,21 +536,25 @@ export default function MaterialOutputTab() {
                     </DropdownMenuLabel>
                     {locations &&
                       locations.length > 0 &&
-                      locations.map((location: any, index: number) => {
-                        const isChecked = !!selectedLocations[index];
-                        return (
-                          <DropdownMenuItem
-                            key={`location-${location.id}`}
-                            onClick={() => selectByProperty("location", index)}
-                            className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
-                          >
-                            {location.name}
-                            <div className="w-5 h-auto">
-                              {isChecked && <Check className="w-4 h-4" />}
-                            </div>
-                          </DropdownMenuItem>
-                        );
-                      })}
+                      locations.map(
+                        (location: LocationProps, index: number) => {
+                          const isChecked = !!selectedLocations[index];
+                          return (
+                            <DropdownMenuItem
+                              key={`location-${location.id}`}
+                              onClick={() =>
+                                selectByProperty("location", index)
+                              }
+                              className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
+                            >
+                              {location.name}
+                              <div className="w-5 h-auto">
+                                {isChecked && <Check className="w-4 h-4" />}
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        }
+                      )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

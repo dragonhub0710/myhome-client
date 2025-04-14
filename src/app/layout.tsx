@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import "@/src/styles/globals.css";
 import { Provider } from "jotai";
 import AuthProvider from "@/src/components/AuthProvider";
-import { Toaster } from "@/src/components/ui/toaster";
+import { NotificationToast } from "@/src/components/notification-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +27,7 @@ export default function RootLayout({
         <Provider>
           <AuthProvider>
             {children}
-            <Toaster />
+            <NotificationToast />
           </AuthProvider>
         </Provider>
       </body>
