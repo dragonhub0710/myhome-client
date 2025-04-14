@@ -35,3 +35,7 @@ export const CREATED_AT_LABEL = "Created At";
 export const CREATED_AT_VALUE = "created_at";
 export const PROJECT_NAME_LABEL = "Project Name";
 export const PROJECT_NAME_VALUE = "name";
+
+export const SMALL_KITCHEN_ASSUMPTION = "small";
+export const MEDIUM_KITCHEN_ASSUMPTION = "medium";
+export const LARGE_KITCHEN_ASSUMPTION = "large";
