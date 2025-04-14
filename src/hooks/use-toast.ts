@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
+
 import * as React from "react";
 
-import type { ToastActionElement, ToastProps } from "@/src/components/ui/toast";
+import type { ToastActionElement, ToastProps } from "@/src/components/toast";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 5;
+const TOAST_REMOVE_DELAY = 5000;
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -40,11 +42,11 @@ type Action =
     }
   | {
       type: ActionType["DISMISS_TOAST"];
-      toastId?: ToasterToast["id"];
+      toastId?: string;
     }
   | {
       type: ActionType["REMOVE_TOAST"];
-      toastId?: ToasterToast["id"];
+      toastId?: string;
     };
 
 interface State {
@@ -69,7 +71,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-export const reducer = (state: State, action: Action): State => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -135,12 +137,12 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
+type ToastOptions = Partial<Omit<ToasterToast, "id">>;
 
-function toast({ ...props }: Toast) {
+function toast(props: ToastOptions) {
   const id = genId();
 
-  const update = (props: ToasterToast) =>
+  const update = (props: ToastOptions) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
@@ -166,7 +168,7 @@ function toast({ ...props }: Toast) {
   };
 }
 
-function useToast() {
+export function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 
   React.useEffect(() => {
@@ -186,4 +188,19 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+// Enhanced toast functions with predefined variants
+toast.success = (props: Omit<ToastOptions, "variant">) => {
+  return toast({ ...props, variant: "success" });
+};
+
+toast.error = (props: Omit<ToastOptions, "variant">) => {
+  return toast({ ...props, variant: "destructive" });
+};
+
+toast.warning = (props: Omit<ToastOptions, "variant">) => {
+  return toast({ ...props, variant: "warning" });
+};
+
+toast.info = (props: Omit<ToastOptions, "variant">) => {
+  return toast({ ...props, variant: "default" });
+};
