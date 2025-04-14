@@ -12,20 +12,8 @@ import { useToast } from "@/src/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authAtom } from "@/src/atoms/authAtom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/src/components/ui/select";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
 import { assumptionSchema, AssumptionType } from "@/src/schema/schema";
-import {
-  LARGE_KITCHEN_ASSUMPTION,
-  MEDIUM_KITCHEN_ASSUMPTION,
-  SMALL_KITCHEN_ASSUMPTION,
-} from "@/src/constants/constants";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -37,7 +25,9 @@ export default function AssumptionTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
   const [localLVP, setLocalLVP] = useState(0);
-  const [localKitchen, setLocalKitchen] = useState(SMALL_KITCHEN_ASSUMPTION);
+  const [localKitchenSmall, setLocalKitchenSmall] = useState(0);
+  const [localKitchenMedium, setLocalKitchenMedium] = useState(0);
+  const [localKitchenLarge, setLocalKitchenLarge] = useState(0);
   const [overageLVP, setOverageLVP] = useState(0);
   const [overageTile, setOverageTile] = useState(0);
   const LoadingOptions = {
@@ -74,7 +64,9 @@ export default function AssumptionTab() {
         form.setValue("localStairTreads", data[0].local_stair_treads || 0);
         form.setValue("localInteriorDoors", data[0].local_interior_doors || 0);
         setLocalLVP(data[0].local_lvp || 0);
-        setLocalKitchen(data[0].local_kitchen || SMALL_KITCHEN_ASSUMPTION);
+        setLocalKitchenSmall(data[0].local_kitchen_small || 0);
+        setLocalKitchenMedium(data[0].local_kitchen_medium || 0);
+        setLocalKitchenLarge(data[0].local_kitchen_large || 0);
         setOverageLVP(data[0].overage_lvp || 0);
         setOverageTile(data[0].overage_tile || 0);
       } else {
@@ -82,7 +74,9 @@ export default function AssumptionTab() {
         form.setValue("localStairTreads", 0);
         form.setValue("localInteriorDoors", 0);
         setLocalLVP(0);
-        setLocalKitchen(SMALL_KITCHEN_ASSUMPTION);
+        setLocalKitchenSmall(0);
+        setLocalKitchenMedium(0);
+        setLocalKitchenLarge(0);
         setOverageLVP(0);
         setOverageTile(0);
       }
@@ -106,7 +100,9 @@ export default function AssumptionTab() {
         local_lvp: localLVP,
         local_stair_treads: data.localStairTreads,
         local_interior_doors: data.localInteriorDoors,
-        local_kitchen: localKitchen,
+        local_kitchen_small: localKitchenSmall,
+        local_kitchen_medium: localKitchenMedium,
+        local_kitchen_large: localKitchenLarge,
         overage_tile: overageTile,
         overage_lvp: overageLVP,
       };
@@ -153,6 +149,39 @@ export default function AssumptionTab() {
       setOverageLVP(value);
     } else {
       setOverageLVP(0);
+    }
+  };
+
+  const handleLocalKitchenSmallChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setLocalKitchenSmall(value);
+    } else {
+      setLocalKitchenSmall(0);
+    }
+  };
+
+  const handleLocalKitchenMediumChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setLocalKitchenMedium(value);
+    } else {
+      setLocalKitchenMedium(0);
+    }
+  };
+
+  const handleLocalKitchenLargeChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
+    if (!isNaN(value)) {
+      setLocalKitchenLarge(value);
+    } else {
+      setLocalKitchenLarge(0);
     }
   };
 
@@ -262,39 +291,61 @@ export default function AssumptionTab() {
                 </div>
               </div>
             </div>
-            <div className="flex space-x-2 w-full">
-              <div className="flex w-full flex-col gap-1">
-                <Label className="text-base">Kitchen</Label>
-                <Select value={localKitchen} onValueChange={setLocalKitchen}>
-                  <SelectTrigger
-                    disabled={!isEditable}
-                    className="w-full flex items-center capitalize bg-white disabled:opacity-100 disabled:cursor-default justify-between border rounded-lg px-3 py-2 hover:shadow"
-                  >
-                    <SelectValue placeholder="Select kitchen size" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem
-                      value={SMALL_KITCHEN_ASSUMPTION}
-                      className="cursor-pointer hover:bg-gray-300 capitalize"
-                    >
-                      {SMALL_KITCHEN_ASSUMPTION}
-                    </SelectItem>
-                    <SelectItem
-                      value={MEDIUM_KITCHEN_ASSUMPTION}
-                      className="cursor-pointer hover:bg-gray-300 capitalize"
-                    >
-                      {MEDIUM_KITCHEN_ASSUMPTION}
-                    </SelectItem>
-                    <SelectItem
-                      value={LARGE_KITCHEN_ASSUMPTION}
-                      className="cursor-pointer hover:bg-gray-300 capitalize"
-                    >
-                      {LARGE_KITCHEN_ASSUMPTION}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-col w-full">
+              <Label className="text-base">Kitchen</Label>
+              <div className="flex space-x-2 w-full">
+                <div className="flex w-full flex-col gap-[2px]">
+                  <Label className="text-xs font-normal text-end">Small</Label>
+                  <div className="relative">
+                    <Input
+                      id="localKitchenSmall"
+                      placeholder="Small Local Kitchen"
+                      type="number"
+                      disabled={!isEditable}
+                      value={localKitchenSmall}
+                      onChange={handleLocalKitchenSmallChange}
+                      className="h-12 w-full pr-[25px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
+                    />
+                    <div className="absolute w-[13px] p-0 right-2 top-1/2 -translate-y-1/2">
+                      $
+                    </div>
+                  </div>
+                </div>
+                <div className="flex w-full flex-col gap-[2px]">
+                  <Label className="text-xs font-normal text-end">Medium</Label>
+                  <div className="relative">
+                    <Input
+                      id="localKitchenMedium"
+                      placeholder="Medium Local Kitchen"
+                      type="number"
+                      disabled={!isEditable}
+                      value={localKitchenMedium}
+                      onChange={handleLocalKitchenMediumChange}
+                      className="h-12 w-full pr-[25px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
+                    />
+                    <div className="absolute w-[13px] p-0 right-2 top-1/2 -translate-y-1/2">
+                      $
+                    </div>
+                  </div>
+                </div>
+                <div className="flex w-full flex-col gap-[2px]">
+                  <Label className="text-xs font-normal text-end">Large</Label>
+                  <div className="relative">
+                    <Input
+                      id="localKitchenLarge"
+                      placeholder="Large Local Kitchen"
+                      type="number"
+                      disabled={!isEditable}
+                      value={localKitchenLarge}
+                      onChange={handleLocalKitchenLargeChange}
+                      className="h-12 w-full pr-[25px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
+                    />
+                    <div className="absolute w-[13px] p-0 right-2 top-1/2 -translate-y-1/2">
+                      $
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex w-full flex-col gap-1"></div>
             </div>
           </div>
           <div className="space-y-3">
