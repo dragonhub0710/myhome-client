@@ -410,17 +410,35 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         </div>
         {showReview ? (
             <Button
-              onClick={() => goToCategory(0)} // or scroll to the full form view
+              onClick={() => goToCategory(0)}
               className="bg-[#2365C8] text-white hover:bg-blue-700"
             >
               Go to Full Category Form
             </Button>
           ) : (
-            <Button onClick={handleGotoReview} className="bg-[#2365C8] text-white hover:bg-blue-700">
-              Jump to Review
-            </Button>
+            <div className="flex gap-2 items-center">
+              <AssistantPopup
+                onSuggestion={(data) => {
+                  Object.entries(data).forEach(([key, value]) => {
+                    const questionId = keyToIdMap[key] || key;
+                    if (questionId) {
+                      updateAnswer(questionId, String(value));
+                      console.log(`✅ Updated ${questionId} with value: ${value}`);
+                    } else {
+                      console.warn(`❌ No question ID found for assistant key: ${key}`);
+                    }
+                  });
+                }}
+              />
+              <Button
+                onClick={handleGotoReview}
+                className="bg-[#2365C8] text-white hover:bg-blue-700"
+              >
+                Jump to Review
+              </Button>
+            </div>
           )}
-      </div>
+        </div>
 
       {!showReview && (
         <div className="space-y-4 flex flex-col min-h-[70vh] justify-between">
@@ -481,19 +499,6 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             </div>
 
             <div className="flex gap-2 items-center">
-              <AssistantPopup
-                onSuggestion={(data) => {
-                  Object.entries(data).forEach(([key, value]) => {
-                    const questionId = keyToIdMap[key] || key;
-                    if (questionId) {
-                      updateAnswer(questionId, String(value));
-                      console.log(`✅ Updated ${questionId} with value: ${value}`);
-                    } else {
-                      console.warn(`❌ No question ID found for assistant key: ${key}`);
-                    }
-                  });
-                }}
-              />
               <Button
                 onClick={handleSaveAnswers}
                 className="text-sm bg-[#2365C8] text-white hover:bg-blue-700"
