@@ -8,22 +8,36 @@ import { supabase } from "@/src/lib/supabase";
 import dynamic from "next/dynamic";
 import { Button } from "../ui/button";
 import { useAtomValue } from "jotai";
+import { useToast } from "@/src/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authAtom } from "@/src/atoms/authAtom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
 import { assumptionSchema, AssumptionType } from "@/src/schema/schema";
+import {
+  LARGE_KITCHEN_ASSUMPTION,
+  MEDIUM_KITCHEN_ASSUMPTION,
+  SMALL_KITCHEN_ASSUMPTION,
+} from "@/src/constants/constants";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
 
 export default function AssumptionTab() {
+  const { toast } = useToast();
   const auth = useAtomValue(authAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
   const [localLVP, setLocalLVP] = useState(0);
-  const [localCabinets, setLocalCabinets] = useState(0);
+  const [localKitchen, setLocalKitchen] = useState(SMALL_KITCHEN_ASSUMPTION);
   const [overageLVP, setOverageLVP] = useState(0);
   const [overageTile, setOverageTile] = useState(0);
   const LoadingOptions = {
@@ -60,7 +74,7 @@ export default function AssumptionTab() {
         form.setValue("localStairTreads", data[0].local_stair_treads || 0);
         form.setValue("localInteriorDoors", data[0].local_interior_doors || 0);
         setLocalLVP(data[0].local_lvp || 0);
-        setLocalCabinets(data[0].local_cabinets || 0);
+        setLocalKitchen(data[0].local_kitchen || SMALL_KITCHEN_ASSUMPTION);
         setOverageLVP(data[0].overage_lvp || 0);
         setOverageTile(data[0].overage_tile || 0);
       } else {
@@ -68,12 +82,16 @@ export default function AssumptionTab() {
         form.setValue("localStairTreads", 0);
         form.setValue("localInteriorDoors", 0);
         setLocalLVP(0);
-        setLocalCabinets(0);
+        setLocalKitchen(SMALL_KITCHEN_ASSUMPTION);
         setOverageLVP(0);
         setOverageTile(0);
       }
     } catch (err) {
       console.error("Error fetching assumptions:", err);
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +106,7 @@ export default function AssumptionTab() {
         local_lvp: localLVP,
         local_stair_treads: data.localStairTreads,
         local_interior_doors: data.localInteriorDoors,
-        local_cabinets: localCabinets,
+        local_kitchen: localKitchen,
         overage_tile: overageTile,
         overage_lvp: overageLVP,
       };
@@ -102,6 +120,10 @@ export default function AssumptionTab() {
       setIsEditable(false);
     } catch (err) {
       console.error("Error saving assumptions:", err);
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -113,17 +135,6 @@ export default function AssumptionTab() {
       setLocalLVP(value);
     } else {
       setLocalLVP(0);
-    }
-  };
-
-  const handleLocalCabinetsChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = parseFloat(parseFloat(e.target.value).toFixed(2));
-    if (!isNaN(value)) {
-      setLocalCabinets(value);
-    } else {
-      setLocalCabinets(0);
     }
   };
 
@@ -253,21 +264,35 @@ export default function AssumptionTab() {
             </div>
             <div className="flex space-x-2 w-full">
               <div className="flex w-full flex-col gap-1">
-                <Label className="text-base">Cabinets</Label>
-                <div className="relative">
-                  <Input
-                    id="localCabinets"
-                    placeholder="Cabinets"
-                    type="number"
+                <Label className="text-base">Kitchen</Label>
+                <Select value={localKitchen} onValueChange={setLocalKitchen}>
+                  <SelectTrigger
                     disabled={!isEditable}
-                    value={localCabinets}
-                    onChange={handleLocalCabinetsChange}
-                    className="h-12 w-full pr-[100px] text-base bg-white disabled:opacity-100 disabled:cursor-default"
-                  />
-                  <div className="absolute w-[87px] p-0 right-2 top-1/2 -translate-y-1/2">
-                    / linear foot
-                  </div>
-                </div>
+                    className="w-full flex items-center capitalize bg-white disabled:opacity-100 disabled:cursor-default justify-between border rounded-lg px-3 py-2 hover:shadow"
+                  >
+                    <SelectValue placeholder="Select kitchen size" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem
+                      value={SMALL_KITCHEN_ASSUMPTION}
+                      className="cursor-pointer hover:bg-gray-300 capitalize"
+                    >
+                      {SMALL_KITCHEN_ASSUMPTION}
+                    </SelectItem>
+                    <SelectItem
+                      value={MEDIUM_KITCHEN_ASSUMPTION}
+                      className="cursor-pointer hover:bg-gray-300 capitalize"
+                    >
+                      {MEDIUM_KITCHEN_ASSUMPTION}
+                    </SelectItem>
+                    <SelectItem
+                      value={LARGE_KITCHEN_ASSUMPTION}
+                      className="cursor-pointer hover:bg-gray-300 capitalize"
+                    >
+                      {LARGE_KITCHEN_ASSUMPTION}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex w-full flex-col gap-1"></div>
             </div>
