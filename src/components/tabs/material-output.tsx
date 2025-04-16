@@ -56,6 +56,7 @@ import {
   HOMEDEPOT_WEBSITE_LABEL,
 } from "@/src/constants/constants";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
+import { authAtom } from "@/src/atoms/authAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -122,6 +123,7 @@ interface LocationProps {
 
 export default function MaterialOutputTab() {
   const { toast } = useToast();
+  const userData = useAtomValue(authAtom);
   const projectData = useAtomValue(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isStatusLoading, setIsStatusLoading] = useState(false);
@@ -163,15 +165,48 @@ export default function MaterialOutputTab() {
       const { data, error } = await supabase
         .from("project_products")
         .select(
-          `*, products(name, image, price, link, websites(name), category, categories(name), location, locations(name))`
+          `*, products(id, name, image, price, link, websites(name, is_local_vendor), category, categories(name), location, locations(name))`
         )
         .eq("project_id", projectData.selectedItem.id)
         .eq("phase", phase)
         .order(sortField, { ascending: sortDirection });
 
       if (error) throw error;
-      if (data) {
-        setProductList(data);
+
+      if (data && data.length > 0) {
+        const products = [...data];
+        for (const [index, item] of data.entries()) {
+          if (item.products.websites.is_local_vendor) {
+            const { data: assumptionData, error: assumptionError } =
+              await supabase
+                .from("assumption_products")
+                .select(
+                  `local_windows, local_lvp, local_stair_treads, local_interior_doors, local_kitchen_small, local_kitchen_medium, local_kitchen_large`
+                );
+            if (assumptionError) throw assumptionError;
+
+            let attributeName = "";
+
+            for (const key in assumptionData[0]) {
+              if (
+                assumptionData[0][key as keyof (typeof assumptionData)[0]] ===
+                item.products.id
+              ) {
+                attributeName = key;
+              }
+            }
+
+            const { data: priceData, error: priceError } = await supabase
+              .from("assumptions")
+              .select(`${attributeName}`)
+              .eq("user_id", userData.user.id);
+            if (priceError) throw priceError;
+
+            products[index]["products"]["price"] =
+              priceData[0]?.[attributeName as keyof (typeof priceData)[0]];
+          }
+        }
+        setProductList(products);
         setCheckboxValues(new Array(data.length).fill(false));
       }
     } catch (err) {
