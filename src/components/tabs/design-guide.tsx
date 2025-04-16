@@ -1,35 +1,52 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { Button } from "../ui/button";
-import { useEffect, useState } from "react";
+import { jsPDF } from "jspdf";
+import { applyPlugin } from "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
+import { Download, Ellipsis } from "lucide-react";
 import { supabase } from "@/src/lib/supabase";
 import { useToast } from "@/src/hooks/use-toast";
-import { Download, Ellipsis } from "lucide-react";
+import { Button } from "@/src/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
-import { jsPDF } from "jspdf";
-import { applyPlugin } from "jspdf-autotable";
-import { autoTable } from "jspdf-autotable";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
+import { useAtomValue } from "jotai";
+import { projectAtom } from "@/src/atoms/projectAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
 
+interface RoomUpgradePdfProps {
+  id: string;
+  name: string;
+  pdf: string;
+}
+
+interface SubContractorPdfProps {
+  id: string;
+  name: string;
+}
+
 export default function DesignGuideTab() {
   const { toast } = useToast();
+  const projectData = useAtomValue(projectAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloadLoading, setIsDownloadLoading] = useState(false);
-  const [subcontractorGuides, setSubcontractorGuides] = useState<any[]>([]);
-  const [upgradePdfs, setUpgradePdfs] = useState<any[]>([]);
+  const [subcontractorPdfs, setSubcontractorPdfs] = useState<
+    SubContractorPdfProps[]
+  >([]);
+  const [roomUpgradePdfs, setRoomUpgradePdfs] = useState<RoomUpgradePdfProps[]>(
+    []
+  );
 
   const LoadingOptions = {
     loop: true,
@@ -41,7 +58,7 @@ export default function DesignGuideTab() {
   };
 
   useEffect(() => {
-    getAllSubcontractorGuides();
+    getAllSubcontractorPdfs();
     getAllRoomUpgradePdfs();
   }, []);
 
@@ -55,19 +72,19 @@ export default function DesignGuideTab() {
         .order("name", { ascending: true });
       if (error) throw error;
 
-      setUpgradePdfs(data);
+      setRoomUpgradePdfs(data);
     } catch (err) {
       console.log(err);
-      toast({
-        title: "Something wrong",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getAllSubcontractorGuides = async () => {
+  const getAllSubcontractorPdfs = async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -76,19 +93,19 @@ export default function DesignGuideTab() {
         .order("name", { ascending: true });
       if (error) throw error;
 
-      setSubcontractorGuides(data);
+      setSubcontractorPdfs(data);
     } catch (err) {
       console.log(err);
-      toast({
-        title: "Something wrong",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDownloadRoomUpgradePDF = async (guide: any) => {
+  const handleDownloadRoomUpgradePDF = async (guide: RoomUpgradePdfProps) => {
     try {
       setIsDownloadLoading(true);
       // Append ?download to the public URL for automatic download
@@ -98,6 +115,10 @@ export default function DesignGuideTab() {
       const response = await fetch(downloadUrl);
 
       if (!response.ok) {
+        toast.error({
+          title: "PDF Download Failed",
+          description: "Please check your internet connection and try again.",
+        });
         throw new Error("Failed to download file");
       }
 
@@ -124,24 +145,29 @@ export default function DesignGuideTab() {
       console.log("File downloaded successfully");
     } catch (error) {
       console.error("Error downloading file:", error);
-      toast({
-        title: "PDF Download is Failed",
-        variant: "destructive",
+      toast.error({
+        title: "PDF Download Failed",
+        description: "Please check your internet connection and try again.",
       });
     } finally {
       setIsDownloadLoading(false);
     }
   };
 
-  const handleDownloadSubcontractorPDF = async (guide: any) => {
+  const handleDownloadSubcontractorPDF = async (
+    guide: SubContractorPdfProps
+  ) => {
     try {
       setIsDownloadLoading(true);
       const guideArrayString = JSON.stringify([guide.id]);
       const { data: guideItems, error } = await supabase
-        .from("products")
-        .select(`*, categories(name), locations(name)`)
-        .filter("guides", "cs", guideArrayString)
-        .order("name", { ascending: true });
+        .from("project_products")
+        .select(
+          `*, products!inner(name, note, image, guides, categories(name), locations(name))`
+        )
+        .filter("products.guides", "cs", guideArrayString)
+        .eq("project_id", projectData.selectedItem.id)
+        .order("products(name)", { ascending: true });
       if (error) throw error;
 
       applyPlugin(jsPDF);
@@ -150,7 +176,7 @@ export default function DesignGuideTab() {
       const dataWithImages = await Promise.all(
         guideItems.map(async (item) => ({
           ...item,
-          base64Image: await convertImageToBase64(item.image),
+          base64Image: await convertImageToBase64(item.products.image),
         }))
       );
 
@@ -172,10 +198,10 @@ export default function DesignGuideTab() {
         head: [tableColumn],
         body: dataWithImages.map((item, index) => [
           index + 1,
-          item.name,
-          item.note,
-          item.locations.name,
-          item.categories.name,
+          item.products.name,
+          item.products.note,
+          item.products.locations.name,
+          item.products.categories.name,
           "", // Placeholder for image
         ]),
         didParseCell: (data) => {
@@ -216,9 +242,9 @@ export default function DesignGuideTab() {
       doc.save(`${guide.name}.pdf`);
     } catch (error) {
       console.error("Error downloading file:", error);
-      toast({
-        title: "PDF Download is Failed",
-        variant: "destructive",
+      toast.error({
+        title: "PDF Download Failed",
+        description: "Please check your internet connection and try again.",
       });
     } finally {
       setIsDownloadLoading(false);
@@ -239,7 +265,7 @@ export default function DesignGuideTab() {
   return (
     <div className="w-full px-4 flex flex-col">
       <div>
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 my-3">
           <p className="text-xl font-semibold">Documents</p>
           <Download />
         </div>
@@ -253,127 +279,135 @@ export default function DesignGuideTab() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col">
-            <div className="py-4 space-y-3">
+          <div className="flex flex-col space-y-8">
+            <div className="space-y-2">
               <p className="text-sm font-normal uppercase">
-                Room Upgrade Design guide
+                Room Upgrade Design Guide
               </p>
               <div>
-                {upgradePdfs && upgradePdfs.length > 0 ? (
-                  <div className="w-full flex flex-wrap gap-5">
-                    {upgradePdfs.map((item: any, idx: number) => {
-                      return (
-                        <div
-                          key={idx}
-                          className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
-                        >
-                          <div className="flex gap-4">
-                            <Image
-                              alt="pdf"
-                              src={"/svg/pdf.svg"}
-                              width={40}
-                              height={40}
-                            />
-                            <div>
-                              <p className="text-base text-[#4D4D4D]">
-                                {item.name}
-                              </p>
+                {roomUpgradePdfs && roomUpgradePdfs.length > 0 ? (
+                  <div className="w-full flex flex-wrap gap-3">
+                    {roomUpgradePdfs.map(
+                      (item: RoomUpgradePdfProps, idx: number) => {
+                        return (
+                          <div
+                            key={idx}
+                            className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
+                          >
+                            <div className="flex gap-4">
+                              <Image
+                                alt="pdf"
+                                src={"/svg/pdf.svg"}
+                                width={40}
+                                height={40}
+                              />
+                              <div>
+                                <p className="text-base text-[#4D4D4D]">
+                                  {item.name}
+                                </p>
+                              </div>
                             </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <Ellipsis />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuContent className="bg-white">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleDownloadRoomUpgradePDF(item)
+                                    }
+                                    className="w-full flex justify-start px-4"
+                                  >
+                                    <Download />
+                                    Download
+                                    {isDownloadLoading && (
+                                      <div className="w-8 h-8">
+                                        <DynamicLottie
+                                          options={LoadingOptions}
+                                          isClickToPauseDisabled={true}
+                                        />
+                                      </div>
+                                    )}
+                                  </Button>
+                                </DropdownMenuContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenu>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
-                              <Ellipsis />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuPortal>
-                              <DropdownMenuContent className="bg-white">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    handleDownloadRoomUpgradePDF(item)
-                                  }
-                                  className="w-full flex justify-start px-4"
-                                >
-                                  <Download />
-                                  Download
-                                  {isDownloadLoading && (
-                                    <div className="w-8 h-8">
-                                      <DynamicLottie
-                                        options={LoadingOptions}
-                                        isClickToPauseDisabled={true}
-                                      />
-                                    </div>
-                                  )}
-                                </Button>
-                              </DropdownMenuContent>
-                            </DropdownMenuPortal>
-                          </DropdownMenu>
-                        </div>
-                      );
-                    })}
+                        );
+                      }
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm italic">No data</p>
                 )}
               </div>
             </div>
-            <div className="py-4 space-y-3">
+            <div className="space-y-2">
               <p className="text-sm font-normal uppercase">
                 Subcontractor Design Guide
               </p>
-              <div className="w-full flex flex-wrap gap-5">
-                {subcontractorGuides &&
-                  subcontractorGuides.length > 0 &&
-                  subcontractorGuides.map((item: any, idx: number) => {
-                    return (
-                      <div
-                        key={idx}
-                        className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
-                      >
-                        <div className="flex gap-4">
-                          <Image
-                            alt="pdf"
-                            src={"/svg/pdf.svg"}
-                            width={40}
-                            height={40}
-                          />
-                          <div>
-                            <p className="text-base text-[#4D4D4D]">
-                              {item.name}
-                            </p>
+              <div>
+                {subcontractorPdfs && subcontractorPdfs.length > 0 ? (
+                  <div className="w-full flex flex-wrap gap-3">
+                    {subcontractorPdfs.map(
+                      (item: SubContractorPdfProps, idx: number) => {
+                        return (
+                          <div
+                            key={idx}
+                            className="w-full max-w-[380px] h-[70px] justify-between border-[1px] items-center rounded-xl cursor-pointer shadow hover:shadow-md flex p-5 bg-white"
+                          >
+                            <div className="flex gap-4">
+                              <Image
+                                alt="pdf"
+                                src={"/svg/pdf.svg"}
+                                width={40}
+                                height={40}
+                              />
+                              <div>
+                                <p className="text-base text-[#4D4D4D]">
+                                  {item.name}
+                                </p>
+                              </div>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger>
+                                <Ellipsis />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuContent className="bg-white">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleDownloadSubcontractorPDF(item)
+                                    }
+                                    className="w-full flex justify-start px-4"
+                                  >
+                                    <Download />
+                                    Download
+                                    {isDownloadLoading && (
+                                      <div className="w-8 h-8">
+                                        <DynamicLottie
+                                          options={LoadingOptions}
+                                          isClickToPauseDisabled={true}
+                                        />
+                                      </div>
+                                    )}
+                                  </Button>
+                                </DropdownMenuContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenu>
                           </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger>
-                            <Ellipsis />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuContent className="bg-white">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleDownloadSubcontractorPDF(item)
-                                }
-                                className="w-full flex justify-start px-4"
-                              >
-                                <Download />
-                                Download
-                                {isDownloadLoading && (
-                                  <div className="w-8 h-8">
-                                    <DynamicLottie
-                                      options={LoadingOptions}
-                                      isClickToPauseDisabled={true}
-                                    />
-                                  </div>
-                                )}
-                              </Button>
-                            </DropdownMenuContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenu>
-                      </div>
-                    );
-                  })}
+                        );
+                      }
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm italic">No data</p>
+                )}
               </div>
             </div>
           </div>
