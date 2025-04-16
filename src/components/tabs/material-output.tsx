@@ -417,7 +417,7 @@ export default function MaterialOutputTab() {
     window.open(redirectLink, "_blank");
   };
 
-  const getASINFromURL = async (url: string) => {
+  const getASINFromURL = (url: string) => {
     const asinRegex = /(?:dp|gp\/product)\/([A-Z0-9]{10})/;
     const match = url.match(asinRegex);
 
