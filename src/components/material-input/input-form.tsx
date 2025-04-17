@@ -46,6 +46,7 @@ type AnswerProps = {
 export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const { toast } = useToast();
   const projectData = useAtomValue(projectAtom);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const headerData = useAtomValue(headerAtom);
   const themeData = useAtomValue(designThemeAtom);
   const questionData = useAtomValue(questionAtom);
@@ -148,23 +149,50 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
     }
   };
 
+  const handleSaveAndNext = async () => {
+    if (hasUnsavedChanges) {
+      await handleSaveAnswers();
+      setHasUnsavedChanges(false);
+    }
+    handleGotoNextCategory();
+  };
 
+  const handleSaveAndPrevious = async () => {
+    if (hasUnsavedChanges) {
+      await handleSaveAnswers();
+      setHasUnsavedChanges(false);
+    }
+    handleGotoPreviousCategory();
+  };
+
+  const handleSaveAndNextStep = async () => {
+      if (hasUnsavedChanges) {
+        await handleSaveAnswers();
+        setHasUnsavedChanges(false);
+      }
+      handleGotoNextStep();
+    };
 
   const updateAnswer = (questionId: string, answer: string) => {
-      setAnswerList((prevAnswers) => {
-        const existingIndex = prevAnswers.findIndex(
-          (item) => item.questionId === questionId
-        );
+    setAnswerList((prevAnswers) => {
+      const existingIndex = prevAnswers.findIndex(
+        (item) => item.questionId === questionId
+      );
 
-        if (existingIndex !== -1) {
-          const updatedAnswers = [...prevAnswers];
-          updatedAnswers[existingIndex] = { questionId, answer };
-          return updatedAnswers;
-        } else {
-          return [...prevAnswers, { questionId, answer }];
-        }
-      });
-    };
+      let updatedAnswers;
+
+      if (existingIndex !== -1) {
+        updatedAnswers = [...prevAnswers];
+        updatedAnswers[existingIndex] = { questionId, answer };
+      } else {
+        updatedAnswers = [...prevAnswers, { questionId, answer }];
+      }
+
+      setHasUnsavedChanges(true);
+      return updatedAnswers;
+    });
+  };
+
 
   const handleGotoPrevStep = () => {
       setCurrentStep(currentStep - 1);
@@ -485,13 +513,13 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
             <div className="flex gap-2">
               <Button
                 disabled={currentCategoryIndex === 0}
-                onClick={handleGotoPreviousCategory}
+                onClick={handleSaveAndPrevious}
                 className="bg-gray-300 hover:bg-gray-400"
               >
                 Previous Category
               </Button>
               <Button
-                onClick={handleGotoNextCategory}
+                onClick={handleSaveAndNext}
                 className="bg-[#2365C8] text-white hover:bg-blue-700"
               >
                 {currentCategoryIndex === headerData.list.length - 1 ? "Finish" : "Next Category"}
@@ -609,7 +637,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
               Previous Step
             </Button>
             <Button
-              onClick={handleGotoNextStep}
+              onClick={handleSaveAndNextStep}
               className="bg-[#2365C8] text-white hover:bg-blue-700"
             >
               Next Step

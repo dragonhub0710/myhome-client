@@ -435,21 +435,79 @@ export default function MaterialOutputTab() {
     FileSaver.saveAs(data, filename + fileExtension);
   };
 
-  const handleAddtoCart = async () => {
+  const handleAmazonCart = () => {
     let count = 0;
-    let redirectLink = `https://www.amazon.com/gp/aws/cart/add.html?AssociateTag=${process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_TAG}`;
-    checkboxValues.map((item: boolean, index: number) => {
-      if (
-        item &&
-        productList[index].products.websites.name === AMAZON_WEBSITE_LABEL
-      ) {
-        redirectLink += `&ASIN.${count + 1}=${getASINFromURL(
-          productList[index].products.link
-        )}&Quantity.${count + 1}=${productList[index].quantity}`;
+    let amazonRedirect = `https://www.amazon.com/gp/aws/cart/add.html?AssociateTag=${process.env.NEXT_PUBLIC_AMAZON_ASSOCIATE_TAG}`;
+
+    for (let i = 0; i < checkboxValues.length; i++) {
+      if (!checkboxValues[i]) continue;
+      const product = productList[i].products;
+      const quantity = productList[i].quantity || 1;
+      const websiteLabel = product.websites.name?.trim();
+
+      if (websiteLabel === AMAZON_WEBSITE_LABEL) {
+        const asin = getASINFromURL(product.link);
         count++;
+        amazonRedirect += `&ASIN.${count}=${asin}&Quantity.${count}=${quantity}`;
       }
-    });
-    window.open(redirectLink, "_blank");
+    }
+
+    if (count > 0) {
+      const tab = window.open(amazonRedirect, "_blank");
+      if (!tab) console.error("❌ Amazon tab blocked");
+    } else {
+      console.warn("⚠️ No Amazon products selected.");
+    }
+  };
+
+  const handleLowesCart = () => {
+    let opened = false;
+
+    for (let i = 0; i < checkboxValues.length; i++) {
+      if (!checkboxValues[i]) continue;
+      const product = productList[i].products;
+      const quantity = productList[i].quantity || 1;
+      const websiteLabel = product.websites.name?.trim();
+
+      if (websiteLabel === LOWES_WEBSITE_LABEL) {
+        try {
+          const url = new URL(product.link);
+          url.searchParams.set("quantity", quantity.toString());
+          const tab = window.open(url.toString(), "_blank");
+          if (!tab) console.error("❌ Lowe's tab blocked:", url.toString());
+          opened = true;
+        } catch {
+          console.error("❌ Invalid Lowe's URL:", product.link);
+        }
+      }
+    }
+
+    if (!opened) console.warn("⚠️ No Lowe's products selected.");
+  };
+
+  const handleHomeDepotCart = () => {
+    let opened = false;
+
+    for (let i = 0; i < checkboxValues.length; i++) {
+      if (!checkboxValues[i]) continue;
+      const product = productList[i].products;
+      const quantity = productList[i].quantity || 1;
+      const websiteLabel = product.websites.name?.trim();
+
+      if (websiteLabel === HOMEDEPOT_WEBSITE_LABEL) {
+        try {
+          const url = new URL(product.link);
+          url.searchParams.set("quantity", quantity.toString());
+          const tab = window.open(url.toString(), "_blank");
+          if (!tab) console.error("❌ Home Depot tab blocked:", url.toString());
+          opened = true;
+        } catch {
+          console.error("❌ Invalid Home Depot URL:", product.link);
+        }
+      }
+    }
+
+    if (!opened) console.warn("⚠️ No Home Depot products selected.");
   };
 
   const getASINFromURL = (url: string) => {
@@ -674,22 +732,29 @@ export default function MaterialOutputTab() {
                 </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="w-24 flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
-                    Add to
+                    Add to Cart
                   </DropdownMenuTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuContent className="bg-white">
                       <Button
-                        onClick={handleAddtoCart}
+                        onClick={handleAmazonCart}
                         className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                       >
                         <p>{AMAZON_WEBSITE_LABEL} Cart</p>
                       </Button>
-                      <Button className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300">
-                        {LOWES_WEBSITE_LABEL} Cart
+                      <Button
+                        onClick={handleHomeDepotCart}
+                        className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                      >
+                        <p>{HOMEDEPOT_WEBSITE_LABEL} Cart</p>
                       </Button>
-                      <Button className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300">
-                        {HOMEDEPOT_WEBSITE_LABEL} Cart
+                      <Button
+                        onClick={handleLowesCart}
+                        className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                      >
+                        <p>{LOWES_WEBSITE_LABEL} Cart</p>
                       </Button>
+
                     </DropdownMenuContent>
                   </DropdownMenuPortal>
                 </DropdownMenu>
