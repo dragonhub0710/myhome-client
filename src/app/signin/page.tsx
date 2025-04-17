@@ -58,18 +58,18 @@ export default function SignInPage() {
         password: user.password,
       });
       if (error) {
-        toast({
+        toast.error({
           title: "Invalid login credentials",
-          variant: "destructive",
+          description: "The email and password you entered is incorrect.",
         });
       }
       if (data) {
         router.push("/projects");
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {

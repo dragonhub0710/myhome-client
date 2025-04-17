@@ -54,9 +54,9 @@ export default function ForgotPasswordPage() {
         password: user.newPassword,
       });
       if (error) {
-        toast({
-          title: "Invalid credentials",
-          variant: "destructive",
+        toast.error({
+          title: "Something went wrong",
+          description: "Please check your internet connection and try again.",
         });
         console.error(error);
       }
@@ -64,9 +64,9 @@ export default function ForgotPasswordPage() {
         router.push("/signin");
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {

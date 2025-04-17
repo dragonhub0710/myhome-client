@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -17,6 +15,10 @@ import Loading_Animation from "@/src/components/loading/light_loading.json";
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
 });
+
+interface UserProps {
+  email: string;
+}
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
@@ -40,26 +42,23 @@ export default function ForgotPasswordPage() {
 
   const isValid = form.formState.isValid && form.getValues("email");
 
-  const handleSubmit = async (user: any) => {
+  const handleSubmit = async (user: UserProps) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(
-        user.email,
-        {
-          redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/update-password`,
-        }
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/update-password`,
+      });
       if (error) {
-        toast({
-          title: "Invalid credentials",
-          variant: "destructive",
+        toast.error({
+          title: "Invalid login credentials",
+          description: "The email you entered is incorrect.",
         });
         console.error(error);
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {

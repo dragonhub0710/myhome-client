@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import * as React from "react";
@@ -30,6 +29,10 @@ function genId() {
 }
 
 type ActionType = typeof actionTypes;
+export const ADD_TOAST = actionTypes.ADD_TOAST;
+export const UPDATE_TOAST = actionTypes.UPDATE_TOAST;
+export const DISMISS_TOAST = actionTypes.DISMISS_TOAST;
+export const REMOVE_TOAST = actionTypes.REMOVE_TOAST;
 
 type Action =
   | {

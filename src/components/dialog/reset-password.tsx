@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
@@ -12,6 +11,8 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import Loading_Animation from "@/src/components/loading/light_loading.json";
 import { ResetPassword, resetPasswordSchema } from "@/src/schema/schema";
+import { useAtomValue } from "jotai";
+import { authAtom } from "@/src/atoms/authAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
   ssr: false,
@@ -23,6 +24,7 @@ type ResetPasswordProps = {
 
 export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
   const { toast } = useToast();
+  const userData = useAtomValue(authAtom);
   const [isloading, setIsLoading] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [oldPasswordRequired, setOldPasswordRequired] = useState(false);
@@ -61,13 +63,27 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
 
     setIsLoading(true);
     try {
+      // Checking the old password
+      const { error: oldPwdError } = await supabase.auth.signInWithPassword({
+        email: userData.user.email,
+        password: oldPassword,
+      });
+      if (oldPwdError) {
+        toast.error({
+          title: "Invalid login credentials",
+          description: "The old password you entered is incorrect.",
+        });
+        return;
+      }
+
+      // Reset the new password
       const { data, error } = await supabase.auth.updateUser({
         password: passwords.newPassword,
       });
       if (error) {
-        toast({
-          title: "Invalid credentials",
-          variant: "destructive",
+        toast.error({
+          title: "Something went wrong",
+          description: "Please check your internet connection and try again.",
         });
         console.error(error);
       }
@@ -75,9 +91,9 @@ export default function ResetPasswordContent({ setOpen }: ResetPasswordProps) {
         setOpen(false);
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {
