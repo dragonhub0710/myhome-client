@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Palette,
   Package,
@@ -104,7 +103,7 @@ export const Features = () => {
                           Select Your Design Style
                         </h4>
                         <Tabs
-                          defaultValue="modern"
+                          value={selectedDesign}
                           onValueChange={setSelectedDesign}
                           className="w-full"
                         >

@@ -61,18 +61,18 @@ export default function SignUpPage() {
         },
       });
       if (error) {
-        toast({
-          title: "Invalid credentials",
-          variant: "destructive",
+        toast.error({
+          title: "Something went wrong",
+          description: "Please check your internet connection and try again.",
         });
       }
       if (data) {
         router.push("/");
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {
