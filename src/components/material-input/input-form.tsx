@@ -351,18 +351,42 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       const updates = [];
 
       for (const [productId, quantity] of Object.entries(productQuantities)) {
-        if (existingMap.has(productId)) {
-          updates.push({ product_id: productId, quantity, project_id: projectId });
+        if (quantity > 0) {
+          if (existingMap.has(productId)) {
+            updates.push({ product_id: productId, quantity, project_id: projectId });
+          } else {
+            inserts.push({
+              product_id: productId,
+              quantity,
+              phase: "1",
+              project_id: projectId,
+              status: STATUS_INCOMPLETE_VALUE,
+            });
+          }
         } else {
-          inserts.push({
-            product_id: productId,
-            quantity,
-            phase: "1",
-            project_id: projectId,
-            status: STATUS_INCOMPLETE_VALUE,
-          });
+          // Remove product if quantity is 0 or invalid
+          const { error: deleteZeroError } = await supabase
+            .from("project_products")
+            .delete()
+            .eq("product_id", productId)
+            .eq("project_id", projectId);
+
+          if (deleteZeroError) console.error("Failed to remove zero-qty product:", deleteZeroError);
         }
       }
+
+  const toDelete = existingProductIds.filter((id) => !referencedProductIds.has(id));
+
+  if (toDelete.length > 0) {
+    const { error: cleanupError } = await supabase
+      .from("project_products")
+      .delete()
+      .in("product_id", toDelete)
+      .eq("project_id", projectId);
+
+    if (cleanupError) console.error("Error removing deselected products:", cleanupError);
+  }
+
 
       // 9. Insert new products
       if (inserts.length > 0) {
