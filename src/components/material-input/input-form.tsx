@@ -13,6 +13,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/src/hooks/use-toast";
 import { supabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
+import { findOptimalPackCombination, Pack } from "@/src/lib/packOptimizer";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { headerAtom } from "@/src/atoms/headerAtom";
 import { designThemeAtom } from "@/src/atoms/themeAtom";
@@ -255,27 +256,75 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
       const productQuantities: { [productId: string]: number } = {};
       const referencedProductIds = new Set<string>();
 
-      answerList.forEach((answerItem) => {
+      for (const answerItem of answerList) {
         const question = questionsData.find((q) => q.id === answerItem.questionId);
-        if (!question) return;
+        if (!question) continue;
 
         try {
           if (question.type === "number") {
             const quantity = parseInt(answerItem.answer, 10);
-            const productObjs = question.answer?.[0]?.products || [];
+            const questionId = question.id;
 
-            productObjs.forEach((p: any) => {
-              const productId = p.productId || p.id;
-              const themePath = p.themePath || null;
+            const isWiredSmoke = questionId === "67807c5d-0a41-4161-8d30-8f8f1ff28059";
+            const isBatterySmoke = questionId === "7b55934a-d833-4f07-97d4-da14d32663a2";
 
-              const isThemeCompatible =
-                !currentProjectThemeId || !themePath || themePath === currentProjectThemeId;
+            if ((isWiredSmoke || isBatterySmoke) && quantity > 0) {
+              const { data: smokeProducts, error: smokeError } = await supabase
+                .from("products")
+                .select("id, unit_per_pack, price, themes")
+                .ilike("name", isWiredSmoke ? "%Wired%" : "%Battery%");
 
-              if (productId && isThemeCompatible) {
-                productQuantities[productId] = (productQuantities[productId] || 0) + quantity;
-                referencedProductIds.add(productId);
+              if (smokeError) {
+                console.error("🔥 Smoke fetch error:", smokeError);
+                continue;
               }
-            });
+
+              const packs = (smokeProducts || [])
+                .filter((p: any) => typeof p.unit_per_pack === "number")
+                .map((p: any) => ({
+                  size: p.unit_per_pack,
+                  price: p.price || 0,
+                  product: p,
+                }));
+
+              const optimized = findOptimalPackCombination(packs, quantity);
+              console.log("📦 Optimized pack breakdown:", optimized.breakdown);
+
+              optimized.breakdown.forEach(({ size, count }) => {
+                const match = packs.find((p) => p.size === size)?.product;
+                if (match) {
+                  const productId = match.id;
+                  const themeList = match.themes || [];
+
+                  const isThemeCompatible =
+                    !currentProjectThemeId ||
+                    themeList.length === 0 ||
+                    themeList.includes(currentProjectThemeId);
+
+                  if (productId && isThemeCompatible) {
+                    productQuantities[productId] = (productQuantities[productId] || 0) + count;
+                    referencedProductIds.add(productId);
+                    console.log(`🧾 Added ${count} of ${size}-pack: ${productId}`);
+                  }
+                }
+              });
+            } else {
+              // Non-smoke numeric fallback
+              const productObjs = question.answer?.[0]?.products || [];
+
+              productObjs.forEach((p: any) => {
+                const productId = p.productId || p.id;
+                const themePath = p.themePath || null;
+
+                const isThemeCompatible =
+                  !currentProjectThemeId || !themePath || themePath === currentProjectThemeId;
+
+                if (productId && isThemeCompatible) {
+                  productQuantities[productId] = (productQuantities[productId] || 0) + quantity;
+                  referencedProductIds.add(productId);
+                }
+              });
+            }
 
           } else if (question.type === "options") {
             const options = question.answer || [];
@@ -300,7 +349,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
         } catch (error) {
           console.error("Error processing answer:", error);
         }
-      });
+      }
 
       // 4. Fetch existing project products
       const { data: existingProducts, error: fetchError } = await supabase
