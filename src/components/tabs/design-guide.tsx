@@ -19,6 +19,7 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import Loading_Animation from "@/src/components/loading/dark_loading.json";
 import { useAtomValue } from "jotai";
+import { semiFlushAtom } from "@/src/atoms/semiFlushAtom";
 import { projectAtom } from "@/src/atoms/projectAtom";
 
 const DynamicLottie = dynamic(() => import("react-lottie"), {
@@ -39,6 +40,7 @@ interface SubContractorPdfProps {
 export default function DesignGuideTab() {
   const { toast } = useToast();
   const projectData = useAtomValue(projectAtom);
+  const semiFlushText = useAtomValue(semiFlushAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloadLoading, setIsDownloadLoading] = useState(false);
   const [subcontractorPdfs, setSubcontractorPdfs] = useState<
@@ -196,14 +198,18 @@ export default function DesignGuideTab() {
       autoTable(doc, {
         startY: 20,
         head: [tableColumn],
-        body: dataWithImages.map((item, index) => [
-          index + 1,
-          item.products.name,
-          item.products.note,
-          item.products.locations.name,
-          item.products.categories.name,
-          "", // Placeholder for image
-        ]),
+        body: dataWithImages.map((item, index) => {
+          const isSemiFlush = item.products.name?.toLowerCase().includes("semi-flush");
+
+          return [
+            index + 1,
+            item.products.name,
+            item.products.note,
+            isSemiFlush ? semiFlushText || "Unspecified" : item.products.locations.name,
+            item.products.categories.name,
+            "", // Placeholder for image
+          ];
+        }),
         didParseCell: (data) => {
           if (data.section === "body") {
             data.cell.styles.fillColor = [255, 255, 255]; // Light gray for body
