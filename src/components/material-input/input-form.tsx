@@ -7,7 +7,7 @@
 
 import { AssistantPopup } from "@/src/components/assistant/AssistantPopup";
 import { useEffect, useRef, useState } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/src/hooks/use-toast";
@@ -17,6 +17,7 @@ import { findOptimalPackCombination, Pack } from "@/src/lib/packOptimizer";
 import { projectAtom } from "@/src/atoms/projectAtom";
 import { headerAtom } from "@/src/atoms/headerAtom";
 import { designThemeAtom } from "@/src/atoms/themeAtom";
+import { semiFlushAtom } from "@/src/atoms/semiFlushAtom";
 import { questionAtom } from "@/src/atoms/questionAtom";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -49,6 +50,7 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
   const projectData = useAtomValue(projectAtom);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const headerData = useAtomValue(headerAtom);
+  const [semiFlushText, setSemiFlushText] = useAtom(semiFlushAtom);
   const themeData = useAtomValue(designThemeAtom);
   const questionData = useAtomValue(questionAtom);
   const setProjectData = useSetAtom(projectAtom);
@@ -579,7 +581,23 @@ export function InputForm({ currentStep, setCurrentStep }: MaterialInputProps) {
                   </div>
                 );
               })}
+
+              {currentHeader.name === "Electrical" && (
+                <div className="flex items-center space-x-4">
+                  <p className="w-1/2 text-sm">Where will semi-flush lights be installed?</p>
+                  <Input
+                    type="text"
+                    value={semiFlushText}
+                    onChange={(e) => {
+                      setSemiFlushText(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                    className="max-w-[200px] w-full"
+                  />
+                </div>
+              )}
             </div>
+
           </div>
 
           <div className="flex justify-between pt-6">
