@@ -41,7 +41,6 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export const updateUserSchema = z.object({
   firstName: requiredSchema,
   lastName: requiredSchema,
-  email: emailSchema,
   avatar: z.string().optional(),
 });
 
