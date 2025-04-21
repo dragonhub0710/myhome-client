@@ -33,6 +33,7 @@ export default function ProfileTab() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isloading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isEditable, setIsEditable] = useState(false);
@@ -56,10 +57,9 @@ export default function ProfileTab() {
       form.reset({
         firstName: auth.user.first_name,
         lastName: auth.user.last_name,
-        email: auth.user.email,
         avatar: auth.user.avatar,
       });
-
+      setEmail(auth.user.email);
       setImageUrl(auth.user.avatar);
     }
   }, [auth.user, form]);
@@ -67,8 +67,7 @@ export default function ProfileTab() {
   const isValid =
     form.formState.isValid &&
     form.getValues("firstName") &&
-    form.getValues("lastName") &&
-    form.getValues("email");
+    form.getValues("lastName");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -90,7 +89,6 @@ export default function ProfileTab() {
       const imgLink = await uploadImage();
 
       const { data, error } = await supabase.auth.updateUser({
-        email: user.email,
         data: {
           first_name: user.firstName,
           last_name: user.lastName,
@@ -98,6 +96,21 @@ export default function ProfileTab() {
         },
       });
       if (error) throw error;
+
+      const { error: userError } = await supabase
+        .from("users")
+        .update({
+          first_name: user.firstName,
+          last_name: user.lastName,
+          avatar: "",
+        })
+        .eq("email", email);
+      if (userError) {
+        toast.error({
+          title: "Something went wrong",
+          description: "Please check your internet connection and try again.",
+        });
+      }
 
       if (data) {
         const userData = data.user?.user_metadata;
@@ -108,9 +121,9 @@ export default function ProfileTab() {
         setIsEditable(false);
       }
     } catch (error) {
-      toast({
-        title: "A network error occurred",
-        variant: "destructive",
+      toast.error({
+        title: "Something went wrong",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
     } finally {
@@ -122,9 +135,10 @@ export default function ProfileTab() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File size exceeds limit of 5 MB",
-        variant: "destructive",
+      toast.error({
+        title: "File Size Limit Exceeded",
+        description:
+          "The file you are trying to upload exceeds the maximum allowed size of 5 MB.",
       });
       return;
     }
@@ -138,9 +152,9 @@ export default function ProfileTab() {
       });
 
     if (error) {
-      toast({
-        title: "Failed uploading image",
-        variant: "destructive",
+      toast.error({
+        title: "Image Upload Failed",
+        description: "Please check your internet connection and try again.",
       });
       console.error(error);
       return;
@@ -159,12 +173,12 @@ export default function ProfileTab() {
 
   const removeImage = async (fileName: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from("images")
-        .remove([fileName]);
-      if (error) throw error;
-      if (data) return;
+      await supabase.storage.from("images").remove([fileName]);
     } catch (err) {
+      toast.error({
+        title: "Image Deletion Failed",
+        description: "Please check your internet connection and try again.",
+      });
       throw err;
     }
   };
@@ -173,7 +187,6 @@ export default function ProfileTab() {
     form.reset({
       firstName: auth.user.first_name,
       lastName: auth.user.last_name,
-      email: auth.user.email,
     });
     setImageUrl(auth.user.avatar);
     setIsEditable(false);
@@ -277,20 +290,13 @@ export default function ProfileTab() {
           </div>
           <div className="flex w-full flex-col gap-1">
             <Label className="text-base">Email</Label>
-            {auth.user && (
-              <Input
-                id="email"
-                placeholder="Email"
-                disabled={!isEditable}
-                {...form.register("email")}
-                className="h-12 w-full text-base bg-white disabled:!opacity-100 disabled:!cursor-default"
-              />
-            )}
-            {form.formState.errors.email && (
-              <p className="text-sm mt-[4px] text-destructive">
-                {form.formState.errors.email.message}
-              </p>
-            )}
+            <Input
+              id="email"
+              placeholder="Email"
+              value={email}
+              disabled
+              className="h-12 w-full text-base bg-white disabled:!opacity-100 disabled:!cursor-default"
+            />
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

@@ -48,7 +48,7 @@ export default function SignUpPage() {
   const handleRegister = async (user: InsertUser) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
         options: {
@@ -57,6 +57,7 @@ export default function SignUpPage() {
             last_name: user.lastName,
             account_status: true,
             avatar: "",
+            role: "user",
           },
         },
       });
@@ -66,9 +67,21 @@ export default function SignUpPage() {
           description: "Please check your internet connection and try again.",
         });
       }
-      if (data) {
-        router.push("/");
+
+      const { error: userError } = await supabase.from("users").insert({
+        first_name: user.firstName,
+        last_name: user.lastName,
+        email: user.email,
+        avatar: "",
+        role: "user",
+      });
+      if (userError) {
+        toast.error({
+          title: "Something went wrong",
+          description: "Please check your internet connection and try again.",
+        });
       }
+      router.push("/projects");
     } catch (error) {
       toast.error({
         title: "Something went wrong",

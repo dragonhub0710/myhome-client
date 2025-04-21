@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { authAtom } from "@/src/atoms/authAtom";
 import { useToast } from "@/src/hooks/use-toast";
 import { supabase } from "@/src/lib/supabase";
@@ -30,7 +30,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const pathName = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const setAuth = useAtom(authAtom)[1];
+  const setAuth = useSetAtom(authAtom);
   const memoizedPublicRoutes = useMemo(() => publicRoutes, []);
 
   useEffect(() => {
@@ -53,10 +53,9 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         }
       } catch (error) {
-        toast({
-          title: "Authentication Error",
-          description: "Please sign in to access this page",
-          variant: "destructive",
+        toast.error({
+          title: "Authentication Failed",
+          description: "The credentials you entered is incorrect.",
         });
         console.error("Auth validation error:", error);
       }

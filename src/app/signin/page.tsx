@@ -53,7 +53,7 @@ export default function SignInPage() {
   const handleSignIn = async (user: UserProps) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: user.password,
       });
@@ -63,9 +63,7 @@ export default function SignInPage() {
           description: "The email and password you entered is incorrect.",
         });
       }
-      if (data) {
-        router.push("/projects");
-      }
+      router.push("/projects");
     } catch (error) {
       toast.error({
         title: "Something went wrong",

@@ -1,9 +1,10 @@
 "use client";
 
+import { useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useToast } from "../hooks/use-toast";
 import { authAtom } from "@/src/atoms/authAtom";
 import { supabase } from "@/src/lib/supabase";
 import { LogOut, User } from "lucide-react";
@@ -16,8 +17,33 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 
 export const Navbar = () => {
-  const router = useRouter();
+  const { toast } = useToast();
   const [auth, setAuth] = useAtom(authAtom);
+
+  const validateAuth = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+
+      const userData = data.session?.user.user_metadata;
+      if (userData) {
+        setAuth({
+          isAuthenticated: true,
+          user: { ...userData, id: data.session?.user.id },
+        });
+      }
+    } catch (error) {
+      toast.error({
+        title: "Authentication Failed",
+        description: "The credentials you entered is incorrect.",
+      });
+      console.error("Auth validation error:", error);
+    }
+  }, [toast, setAuth]);
+
+  useEffect(() => {
+    validateAuth();
+  }, [validateAuth]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -29,7 +55,6 @@ export const Navbar = () => {
       isAuthenticated: false,
       user: null,
     });
-    router.push("/signin");
   };
 
   return (
@@ -57,7 +82,7 @@ export const Navbar = () => {
             >
               Pricing
             </Link>
-            <div>
+            <div className="flex items-center">
               {auth.isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger>
