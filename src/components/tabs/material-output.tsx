@@ -171,10 +171,9 @@ export default function MaterialOutputTab() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data?.length > 0) {
         const products = [...data];
         for (const [index, item] of data.entries()) {
-          console.log({ item });
           if (item.products.websites.is_local_vendor) {
             const { data: attributeData, error: attributeError } =
               await supabase
@@ -200,8 +199,10 @@ export default function MaterialOutputTab() {
           }
         }
         setProductList(products);
-        setCheckboxValues(new Array(data.length).fill(false));
+      } else {
+        setProductList([]);
       }
+      setCheckboxValues(new Array(data.length).fill(false));
     } catch (err) {
       console.error(err);
       toast.error({
@@ -575,207 +576,198 @@ export default function MaterialOutputTab() {
   return (
     <div className="w-full h-full px-4">
       <div className="w-full h-full flex flex-col">
-        {productList.length > 0 && (
-          <div>
-            <div className="w-full flex justify-between py-3">
-              <div className="flex gap-4">
-                <Select value={phase} onValueChange={setPhase}>
-                  <SelectTrigger className="w-28 flex items-center bg-white justify-between border-[1px] rounded-lg px-3 py-2 hover:shadow">
-                    <SelectValue placeholder="Select a phase" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem
-                      value={PHASE_1}
-                      className="cursor-pointer hover:bg-gray-300"
-                    >
-                      Phase {PHASE_1}
-                    </SelectItem>
-                    <SelectItem
-                      value={PHASE_2}
-                      className="cursor-pointer hover:bg-gray-300"
-                    >
-                      Phase {PHASE_2}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-10 flex space-x-3">
-                      Select by
-                      <ArrowDownNarrowWide className="text-[#858585]" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white max-h-[300px] overflow-auto">
-                    <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
-                      Category
-                    </DropdownMenuLabel>
-                    {categories &&
-                      categories.length > 0 &&
-                      categories.map(
-                        (category: CategoryProps, index: number) => {
-                          const isChecked = !!selectedCategories[index];
-                          return (
-                            <DropdownMenuItem
-                              key={`category-${category.id}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                selectByProperty("category", index);
-                              }}
-                              className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
-                            >
-                              {category.name}
-                              <div className="w-5 h-auto">
-                                {isChecked && <Check className="w-4 h-4" />}
-                              </div>
-                            </DropdownMenuItem>
-                          );
-                        }
-                      )}
-
-                    <DropdownMenuSeparator className="border" />
-
-                    <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
-                      Location
-                    </DropdownMenuLabel>
-                    {locations &&
-                      locations.length > 0 &&
-                      locations.map(
-                        (location: LocationProps, index: number) => {
-                          const isChecked = !!selectedLocations[index];
-                          return (
-                            <DropdownMenuItem
-                              key={`location-${location.id}`}
-                              onClick={() =>
-                                selectByProperty("location", index)
-                              }
-                              className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
-                            >
-                              {location.name}
-                              <div className="w-5 h-auto">
-                                {isChecked && <Check className="w-4 h-4" />}
-                              </div>
-                            </DropdownMenuItem>
-                          );
-                        }
-                      )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="space-x-4 flex">
-                <DropdownMenu
-                  open={openMovePhaseMenu}
-                  onOpenChange={setOpenMovePhaseMenu}
-                >
-                  <DropdownMenuTrigger className="rounded-lg w-10 h-10 bg-[#2365C81A] p-0 flex items-center justify-center">
-                    <EllipsisVerticalIcon className="w-auto h-6" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent className="bg-white">
-                      <Button
-                        disabled={isDisabled}
-                        onClick={handleMovePhase}
-                        className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        {isPahseLoading ? (
-                          <div className="w-full flex items-center justify-center">
-                            <div className="w-12 h-12">
-                              <DynamicLottie
-                                options={LoadingOptions}
-                                isClickToPauseDisabled={true}
-                              />
-                            </div>
+        <div>
+          <div className="w-full flex justify-between py-3">
+            <div className="flex gap-4">
+              <Select value={phase} onValueChange={setPhase}>
+                <SelectTrigger className="w-28 flex items-center bg-white justify-between border-[1px] rounded-lg px-3 py-2 hover:shadow">
+                  <SelectValue placeholder="Select a phase" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem
+                    value={PHASE_1}
+                    className="cursor-pointer hover:bg-gray-300"
+                  >
+                    Phase {PHASE_1}
+                  </SelectItem>
+                  <SelectItem
+                    value={PHASE_2}
+                    className="cursor-pointer hover:bg-gray-300"
+                  >
+                    Phase {PHASE_2}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-10 flex space-x-3">
+                    Select by
+                    <ArrowDownNarrowWide className="text-[#858585]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white max-h-[300px] overflow-auto">
+                  <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
+                    Category
+                  </DropdownMenuLabel>
+                  {categories &&
+                    categories.length > 0 &&
+                    categories.map((category: CategoryProps, index: number) => {
+                      const isChecked = !!selectedCategories[index];
+                      return (
+                        <DropdownMenuItem
+                          key={`category-${category.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            selectByProperty("category", index);
+                          }}
+                          className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
+                        >
+                          {category.name}
+                          <div className="w-5 h-auto">
+                            {isChecked && <Check className="w-4 h-4" />}
                           </div>
-                        ) : (
-                          <p>
-                            Move to Phase{" "}
-                            {phase === PHASE_1 ? PHASE_2 : PHASE_1}
-                          </p>
-                        )}
-                      </Button>
-                      <Button
-                        disabled={isDisabled}
-                        onClick={() => handleUpdateStatus()}
-                        className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        {isStatusLoading ? (
-                          <div className="w-full flex items-center justify-center">
-                            <div className="w-12 h-12">
-                              <DynamicLottie
-                                options={LoadingOptions}
-                                isClickToPauseDisabled={true}
-                              />
-                            </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+
+                  <DropdownMenuSeparator className="border" />
+
+                  <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
+                    Location
+                  </DropdownMenuLabel>
+                  {locations &&
+                    locations.length > 0 &&
+                    locations.map((location: LocationProps, index: number) => {
+                      const isChecked = !!selectedLocations[index];
+                      return (
+                        <DropdownMenuItem
+                          key={`location-${location.id}`}
+                          onClick={() => selectByProperty("location", index)}
+                          className="w-full flex justify-between hover:bg-[#cccccc] cursor-pointer"
+                        >
+                          {location.name}
+                          <div className="w-5 h-auto">
+                            {isChecked && <Check className="w-4 h-4" />}
                           </div>
-                        ) : (
-                          <p>Update Status</p>
-                        )}
-                      </Button>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="rounded-lg px-4 text-sm font-medium bg-[#2365C81A] flex items-center justify-center">
-                    Download Pro Sheet
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent className="bg-white">
-                      <Button
-                        onClick={() => exportToExcel(AMAZON_WEBSITE_LABEL)}
-                        className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        {AMAZON_WEBSITE_LABEL}
-                      </Button>
-                      <Button
-                        onClick={() => exportToExcel(LOWES_WEBSITE_LABEL)}
-                        className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        {LOWES_WEBSITE_LABEL}
-                      </Button>
-                      <Button
-                        onClick={() => exportToExcel(HOMEDEPOT_WEBSITE_LABEL)}
-                        className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        {HOMEDEPOT_WEBSITE_LABEL}
-                      </Button>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
-                    Add to Cart
-                  </DropdownMenuTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuContent className="bg-white">
-                      <Button
-                        onClick={handleAmazonCart}
-                        className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        <p>{AMAZON_WEBSITE_LABEL} Cart</p>
-                      </Button>
-                      <Button
-                        onClick={handleHomeDepotCart}
-                        className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        <p>{HOMEDEPOT_WEBSITE_LABEL} Cart</p>
-                      </Button>
-                      <Button
-                        onClick={handleLowesCart}
-                        className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
-                      >
-                        <p>{LOWES_WEBSITE_LABEL} Cart</p>
-                      </Button>
-                    </DropdownMenuContent>
-                  </DropdownMenuPortal>
-                </DropdownMenu>
-              </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {getSelectedRowsLength()} of {productList.length} selected
-              </span>
+            <div className="space-x-4 flex">
+              <DropdownMenu
+                open={openMovePhaseMenu}
+                onOpenChange={setOpenMovePhaseMenu}
+              >
+                <DropdownMenuTrigger className="rounded-lg w-10 h-10 bg-[#2365C81A] p-0 flex items-center justify-center">
+                  <EllipsisVerticalIcon className="w-auto h-6" />
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent className="bg-white">
+                    <Button
+                      disabled={isDisabled}
+                      onClick={handleMovePhase}
+                      className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      {isPahseLoading ? (
+                        <div className="w-full flex items-center justify-center">
+                          <div className="w-12 h-12">
+                            <DynamicLottie
+                              options={LoadingOptions}
+                              isClickToPauseDisabled={true}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p>
+                          Move to Phase {phase === PHASE_1 ? PHASE_2 : PHASE_1}
+                        </p>
+                      )}
+                    </Button>
+                    <Button
+                      disabled={isDisabled}
+                      onClick={() => handleUpdateStatus()}
+                      className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      {isStatusLoading ? (
+                        <div className="w-full flex items-center justify-center">
+                          <div className="w-12 h-12">
+                            <DynamicLottie
+                              options={LoadingOptions}
+                              isClickToPauseDisabled={true}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p>Update Status</p>
+                      )}
+                    </Button>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="rounded-lg px-4 text-sm font-medium bg-[#2365C81A] flex items-center justify-center">
+                  Download Pro Sheet
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent className="bg-white">
+                    <Button
+                      onClick={() => exportToExcel(AMAZON_WEBSITE_LABEL)}
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      {AMAZON_WEBSITE_LABEL}
+                    </Button>
+                    <Button
+                      onClick={() => exportToExcel(LOWES_WEBSITE_LABEL)}
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      {LOWES_WEBSITE_LABEL}
+                    </Button>
+                    <Button
+                      onClick={() => exportToExcel(HOMEDEPOT_WEBSITE_LABEL)}
+                      className="w-36 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      {HOMEDEPOT_WEBSITE_LABEL}
+                    </Button>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
+                  Add to Cart
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent className="bg-white">
+                    <Button
+                      onClick={handleAmazonCart}
+                      className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      <p>{AMAZON_WEBSITE_LABEL} Cart</p>
+                    </Button>
+                    <Button
+                      onClick={handleHomeDepotCart}
+                      className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      <p>{HOMEDEPOT_WEBSITE_LABEL} Cart</p>
+                    </Button>
+                    <Button
+                      onClick={handleLowesCart}
+                      className="w-48 flex justify-between px-4 bg-white text-black hover:bg-gray-300"
+                    >
+                      <p>{LOWES_WEBSITE_LABEL} Cart</p>
+                    </Button>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
             </div>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {getSelectedRowsLength()} of {productList.length} selected
+            </span>
+          </div>
+        </div>
         {isLoading ? (
           <div className="w-full h-48 flex justify-center items-center">
             <div className="w-24 h-24">
@@ -786,212 +778,210 @@ export default function MaterialOutputTab() {
             </div>
           </div>
         ) : (
-          <div className="w-full flex overflow-auto">
+          <div className="w-full flex flex-1 overflow-auto">
             {productList.length > 0 ? (
-              <div className="space-y-3 w-full">
-                <Table>
-                  <TableHeader className="bg-[#EAEFF5] rounded">
-                    <TableRow>
-                      <TableCell></TableCell>
-                      <TableCell className="cursor-default hover:bg-[#ced2d8]">
-                        Category
-                      </TableCell>
-                      <TableCell
-                        onClick={() => handleSetSortField("products(name)")}
-                        className="cursor-pointer hover:bg-[#ced2d8]"
-                      >
-                        Item
-                      </TableCell>
-                      <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
-                        Location
-                      </TableCell>
-                      <TableCell
-                        onClick={() => handleSetSortField("status")}
-                        className="cursor-pointer hover:bg-[#ced2d8]"
-                      >
-                        Status
-                      </TableCell>
-                      <TableCell
-                        onClick={() => handleSetSortField("quantity")}
-                        className="cursor-pointer hover:bg-[#ced2d8]"
-                      >
-                        Quantity
-                      </TableCell>
-                      <TableCell
-                        onClick={() => handleSetSortField("products(price)")}
-                        className="cursor-pointer hover:bg-[#ced2d8]"
-                      >
-                        Price($)
-                      </TableCell>
-                      <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
-                        Item Link
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="bg-white">
-                    {productList &&
-                      productList.length > 0 &&
-                      productList.map((item, idx) => {
-                        return (
-                          <TableRow
-                            key={idx}
-                            onClick={() => handleSelectRow(idx)}
-                            className={`cursor-pointer ${
-                              checkboxValues[idx]
-                                ? "bg-[#e9e9e9a2]"
-                                : "bg-transparent"
-                            }`}
-                          >
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={checkboxValues[idx]}
-                                  onChange={() => handleCheckboxChange(idx)}
-                                  className="rounded w-4 h-4"
-                                />
+              <Table>
+                <TableHeader className="bg-[#EAEFF5] rounded">
+                  <TableRow>
+                    <TableCell></TableCell>
+                    <TableCell className="cursor-default hover:bg-[#ced2d8]">
+                      Category
+                    </TableCell>
+                    <TableCell
+                      onClick={() => handleSetSortField("products(name)")}
+                      className="cursor-pointer hover:bg-[#ced2d8]"
+                    >
+                      Item
+                    </TableCell>
+                    <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
+                      Location
+                    </TableCell>
+                    <TableCell
+                      onClick={() => handleSetSortField("status")}
+                      className="cursor-pointer hover:bg-[#ced2d8]"
+                    >
+                      Status
+                    </TableCell>
+                    <TableCell
+                      onClick={() => handleSetSortField("quantity")}
+                      className="cursor-pointer hover:bg-[#ced2d8]"
+                    >
+                      Quantity
+                    </TableCell>
+                    <TableCell
+                      onClick={() => handleSetSortField("products(price)")}
+                      className="cursor-pointer hover:bg-[#ced2d8]"
+                    >
+                      Price($)
+                    </TableCell>
+                    <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
+                      Item Link
+                    </TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="bg-white">
+                  {productList &&
+                    productList.length > 0 &&
+                    productList.map((item, idx) => {
+                      return (
+                        <TableRow
+                          key={idx}
+                          onClick={() => handleSelectRow(idx)}
+                          className={`cursor-pointer ${
+                            checkboxValues[idx]
+                              ? "bg-[#e9e9e9a2]"
+                              : "bg-transparent"
+                          }`}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={checkboxValues[idx]}
+                                onChange={() => handleCheckboxChange(idx)}
+                                className="rounded w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {item.products.categories.name || ""}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-4">
+                              <div className="w-7 h-7 flex items-center justify-center rounded bg-[#F6F7F8]">
+                                {item.products.image ? (
+                                  <Image
+                                    alt="image"
+                                    src={item.products.image}
+                                    width={40}
+                                    height={40}
+                                  />
+                                ) : (
+                                  <div className="rounded min-w-10 w-10 h-10 flex items-center justify-center bg-primary">
+                                    <Store className="w-8 h-8 text-white" />
+                                  </div>
+                                )}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {item.products.categories.name || ""}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-4">
-                                <div className="w-7 h-7 flex items-center justify-center rounded bg-[#F6F7F8]">
-                                  {item.products.image ? (
-                                    <Image
-                                      alt="image"
-                                      src={item.products.image}
-                                      width={40}
-                                      height={40}
-                                    />
-                                  ) : (
-                                    <div className="rounded min-w-10 w-10 h-10 flex items-center justify-center bg-primary">
-                                      <Store className="w-8 h-8 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-sm w-[120px]">
-                                  {item.products.name || ""}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div key={idx} className="flex gap-2">
-                                <Checkbox
-                                  className="bg-[green] disabled:!opacity-100 disabled:!cursor-default text-white rounded-full w-5 h-5"
-                                  checked={true}
-                                  disabled
-                                />
-                                <p className="text-sm">
-                                  {item.products.locations.name || ""}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={item.status}
-                                onValueChange={(value) =>
-                                  handleStatusChange(idx, value)
-                                }
+                              <p className="text-sm w-[120px]">
+                                {item.products.name || ""}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div key={idx} className="flex gap-2">
+                              <Checkbox
+                                className="bg-[green] disabled:!opacity-100 disabled:!cursor-default text-white rounded-full w-5 h-5"
+                                checked={true}
+                                disabled
+                              />
+                              <p className="text-sm">
+                                {item.products.locations.name || ""}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={item.status}
+                              onValueChange={(value) =>
+                                handleStatusChange(idx, value)
+                              }
+                            >
+                              <SelectTrigger
+                                className={`w-[170px] bg-transparent border-none text-[${getStatusColor(
+                                  item.status
+                                )}]`}
                               >
-                                <SelectTrigger
-                                  className={`w-[170px] bg-transparent border-none text-[${getStatusColor(
-                                    item.status
-                                  )}]`}
+                                <SelectValue placeholder="Select a status" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem
+                                  value={STATUS_INCOMPLETE_VALUE}
+                                  className="cursor-pointer text-[#DB5D02] hover:bg-gray-300"
                                 >
-                                  <SelectValue placeholder="Select a status" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-white">
-                                  <SelectItem
-                                    value={STATUS_INCOMPLETE_VALUE}
-                                    className="cursor-pointer text-[#DB5D02] hover:bg-gray-300"
-                                  >
-                                    {STATUS_INCOMPLETE_LABEL}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={STATUS_READY_VALUE}
-                                    className="cursor-pointer text-primary hover:bg-gray-300"
-                                  >
-                                    {STATUS_READY_LABEL}
-                                  </SelectItem>
-                                  <SelectItem
-                                    value={STATUS_ORDERED_VALUE}
-                                    className="cursor-pointer text-[#2AA200] hover:bg-gray-300"
-                                  >
-                                    {STATUS_ORDERED_LABEL}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>
-                              {(item.products.price || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              {item.products.websites.is_local_vendor ? (
-                                <p>Local Vendor</p>
-                              ) : (
-                                <a
-                                  href={item.products.link || ""}
-                                  target="_blank"
-                                  className="cursor-pointer underline text-primary"
+                                  {STATUS_INCOMPLETE_LABEL}
+                                </SelectItem>
+                                <SelectItem
+                                  value={STATUS_READY_VALUE}
+                                  className="cursor-pointer text-primary hover:bg-gray-300"
                                 >
-                                  Website Link
-                                </a>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu
-                                open={dropdownOpenStates[item.id] || false}
-                                onOpenChange={() => toggleDropdown(item.id)}
+                                  {STATUS_READY_LABEL}
+                                </SelectItem>
+                                <SelectItem
+                                  value={STATUS_ORDERED_VALUE}
+                                  className="cursor-pointer text-[#2AA200] hover:bg-gray-300"
+                                >
+                                  {STATUS_ORDERED_LABEL}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>
+                            {(item.products.price || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {item.products.websites.is_local_vendor ? (
+                              <p>Local Vendor</p>
+                            ) : (
+                              <a
+                                href={item.products.link || ""}
+                                target="_blank"
+                                className="cursor-pointer underline text-primary"
                               >
-                                <DropdownMenuTrigger
-                                  onClick={() => toggleDropdown(item.id)}
+                                Website Link
+                              </a>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu
+                              open={dropdownOpenStates[item.id] || false}
+                              onOpenChange={() => toggleDropdown(item.id)}
+                            >
+                              <DropdownMenuTrigger
+                                onClick={() => toggleDropdown(item.id)}
+                              >
+                                <Trash2 className="text-destructive w-5 h-5" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuContent
+                                  align="start"
+                                  className="bg-white space-y-1"
                                 >
-                                  <Trash2 className="text-destructive w-5 h-5" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuPortal>
-                                  <DropdownMenuContent
-                                    align="start"
-                                    className="bg-white space-y-1"
-                                  >
-                                    <div className="flex justify-between gap-2 px-2">
-                                      <div
-                                        onClick={() => handleDelete(item.id)}
-                                        className="bg-[#2AA200] flex items-center cursor-pointer text-white py-1 px-3 rounded text-sm"
-                                      >
-                                        {isLoading ? (
-                                          <div className="w-5 h-5">
-                                            <DynamicLottie
-                                              options={LoadingOptions}
-                                              isClickToPauseDisabled={true}
-                                            />
-                                          </div>
-                                        ) : (
-                                          <p>Yes</p>
-                                        )}
-                                      </div>
-                                      <div
-                                        onClick={() => toggleDropdown(item.id)}
-                                        className="bg-destructive text-white cursor-pointer py-1 px-3 rounded text-sm"
-                                      >
-                                        No
-                                      </div>
+                                  <div className="flex justify-between gap-2 px-2">
+                                    <div
+                                      onClick={() => handleDelete(item.id)}
+                                      className="bg-[#2AA200] flex items-center cursor-pointer text-white py-1 px-3 rounded text-sm"
+                                    >
+                                      {isLoading ? (
+                                        <div className="w-5 h-5">
+                                          <DynamicLottie
+                                            options={LoadingOptions}
+                                            isClickToPauseDisabled={true}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <p>Yes</p>
+                                      )}
                                     </div>
-                                  </DropdownMenuContent>
-                                </DropdownMenuPortal>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </div>
+                                    <div
+                                      onClick={() => toggleDropdown(item.id)}
+                                      className="bg-destructive text-white cursor-pointer py-1 px-3 rounded text-sm"
+                                    >
+                                      No
+                                    </div>
+                                  </div>
+                                </DropdownMenuContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
             ) : (
               <div className="w-full flex flex-col items-center justify-center">
                 <Image
