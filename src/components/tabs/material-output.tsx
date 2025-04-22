@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import * as XLSX from "xlsx";
@@ -85,7 +84,7 @@ interface ProductProps {
   categories: { name: string };
   location: string;
   locations: { name: string };
-  websites: { name: string };
+  websites: { name: string; is_local_vendor: boolean };
 }
 
 interface ProjectProductProps {
@@ -138,8 +137,7 @@ export default function MaterialOutputTab() {
   const [locations, setLocations] = useState<LocationProps[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<boolean[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<boolean[]>([]);
-  const [movePhaseDisabled, setMovePhaseDisabled] = useState(true);
-  const [updateStatusDisabled, setUpdateStatusDisabled] = useState(true);
+  const [isDisabled, setIsDisabled] = useState(true);
   const [dropdownOpenStates, setDropdownOpenStates] = useState<{
     [key: string]: boolean;
   }>({});
@@ -159,7 +157,7 @@ export default function MaterialOutputTab() {
     }));
   };
 
-  const getAllProjectProducts = async () => {
+  const getAllProjectProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -176,34 +174,29 @@ export default function MaterialOutputTab() {
       if (data && data.length > 0) {
         const products = [...data];
         for (const [index, item] of data.entries()) {
+          console.log({ item });
           if (item.products.websites.is_local_vendor) {
-            const { data: assumptionData, error: assumptionError } =
+            const { data: attributeData, error: attributeError } =
               await supabase
-                .from("assumption_products")
-                .select(
-                  `local_windows, local_lvp, local_stair_treads, local_interior_doors, local_kitchen_small, local_kitchen_medium, local_kitchen_large`
-                );
-            if (assumptionError) throw assumptionError;
+                .from("assumption_attributes")
+                .select(`*`)
+                .eq("product_id", item.products.id);
+            if (attributeError) throw attributeError;
 
-            let attributeName = "";
-
-            for (const key in assumptionData[0]) {
-              if (
-                assumptionData[0][key as keyof (typeof assumptionData)[0]] ===
-                item.products.id
-              ) {
-                attributeName = key;
+            if (attributeData?.length > 0) {
+              const { data: assumptionData, error: assumptionError } =
+                await supabase
+                  .from("assumptions")
+                  .select(`*`)
+                  .eq("user_email", userData.user.email);
+              if (assumptionError) throw assumptionError;
+              if (assumptionData?.length > 0) {
+                products[index]["products"]["price"] =
+                  assumptionData[0].values[attributeData[0].id];
               }
+            } else {
+              products[index]["products"]["price"] = 0;
             }
-
-            const { data: priceData, error: priceError } = await supabase
-              .from("assumptions")
-              .select(`${attributeName}`)
-              .eq("user_id", userData.user.id);
-            if (priceError) throw priceError;
-
-            products[index]["products"]["price"] =
-              priceData[0]?.[attributeName as keyof (typeof priceData)[0]];
           }
         }
         setProductList(products);
@@ -218,9 +211,16 @@ export default function MaterialOutputTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    toast,
+    userData,
+    phase,
+    projectData.selectedItem,
+    sortDirection,
+    sortField,
+  ]);
 
-  const getAllCategoies = async () => {
+  const getAllCategoies = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -241,9 +241,9 @@ export default function MaterialOutputTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const getAllLocations = async () => {
+  const getAllLocations = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -264,7 +264,7 @@ export default function MaterialOutputTab() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (projectData.selectedItem) {
@@ -272,7 +272,21 @@ export default function MaterialOutputTab() {
       getAllCategoies();
       getAllLocations();
     }
-  }, [projectData.selectedItem, phase, sortField, sortDirection]);
+  }, [
+    projectData.selectedItem,
+    phase,
+    sortField,
+    sortDirection,
+    toast,
+    userData,
+    getAllCategoies,
+    getAllLocations,
+    getAllProjectProducts,
+  ]);
+
+  useEffect(() => {
+    setIsDisabled(!checkboxValues.some((value) => value));
+  }, [checkboxValues]);
 
   const handleMovePhase = async () => {
     try {
@@ -292,8 +306,7 @@ export default function MaterialOutputTab() {
       );
       getAllProjectProducts();
       setOpenMovePhaseMenu(false);
-      setMovePhaseDisabled(true);
-      setUpdateStatusDisabled(true);
+      setIsDisabled(true);
       setCheckboxValues(new Array(productList.length).fill(false));
     } catch (err) {
       console.error(err);
@@ -335,8 +348,7 @@ export default function MaterialOutputTab() {
       );
       getAllProjectProducts();
       setOpenMovePhaseMenu(false);
-      setMovePhaseDisabled(true);
-      setUpdateStatusDisabled(true);
+      setIsDisabled(true);
       setCheckboxValues(new Array(productList.length).fill(false));
     } catch (err) {
       throw err;
@@ -354,8 +366,6 @@ export default function MaterialOutputTab() {
     const updatedValues = [...checkboxValues];
     updatedValues[index] = !updatedValues[index];
     setCheckboxValues(updatedValues);
-    setMovePhaseDisabled(updatedValues.every((value) => !value));
-    setUpdateStatusDisabled(updatedValues.every((value) => !value));
   };
 
   const handleDelete = async (id: string) => {
@@ -596,7 +606,7 @@ export default function MaterialOutputTab() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-white max-h-[300px] overflow-auto">
-                    <DropdownMenuLabel className="cursor-default">
+                    <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
                       Category
                     </DropdownMenuLabel>
                     {categories &&
@@ -624,7 +634,7 @@ export default function MaterialOutputTab() {
 
                     <DropdownMenuSeparator className="border" />
 
-                    <DropdownMenuLabel className="cursor-default font-bold">
+                    <DropdownMenuLabel className="cursor-default font-bold bg-[#dadada]">
                       Location
                     </DropdownMenuLabel>
                     {locations &&
@@ -662,7 +672,7 @@ export default function MaterialOutputTab() {
                   <DropdownMenuPortal>
                     <DropdownMenuContent className="bg-white">
                       <Button
-                        disabled={movePhaseDisabled}
+                        disabled={isDisabled}
                         onClick={handleMovePhase}
                         className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                       >
@@ -683,7 +693,7 @@ export default function MaterialOutputTab() {
                         )}
                       </Button>
                       <Button
-                        disabled={updateStatusDisabled}
+                        disabled={isDisabled}
                         onClick={() => handleUpdateStatus()}
                         className="w-full flex justify-between px-4 bg-white text-black hover:bg-gray-300"
                       >
@@ -731,7 +741,7 @@ export default function MaterialOutputTab() {
                   </DropdownMenuPortal>
                 </DropdownMenu>
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="w-24 flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
+                  <DropdownMenuTrigger className="flex items-center bg-primary text-sm font-medium text-white rounded-lg px-4 py-2 hover:shadow">
                     Add to Cart
                   </DropdownMenuTrigger>
                   <DropdownMenuPortal>
@@ -754,7 +764,6 @@ export default function MaterialOutputTab() {
                       >
                         <p>{LOWES_WEBSITE_LABEL} Cart</p>
                       </Button>
-
                     </DropdownMenuContent>
                   </DropdownMenuPortal>
                 </DropdownMenu>
@@ -793,7 +802,7 @@ export default function MaterialOutputTab() {
                       >
                         Item
                       </TableCell>
-                      <TableCell className="cursor-default hover:bg-[#ced2d8]">
+                      <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
                         Location
                       </TableCell>
                       <TableCell
@@ -814,7 +823,7 @@ export default function MaterialOutputTab() {
                       >
                         Price($)
                       </TableCell>
-                      <TableCell className="cursor-default hover:bg-[#ced2d8]">
+                      <TableCell className="cursor-default hover:bg-[#ced2d8] min-w-[120px]">
                         Item Link
                       </TableCell>
                       <TableCell></TableCell>
@@ -920,18 +929,20 @@ export default function MaterialOutputTab() {
                             </TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>
-                              {(
-                                item.quantity * (item.products.price || 0)
-                              ).toFixed(2)}
+                              {(item.products.price || 0).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              <a
-                                href={item.products.link || ""}
-                                target="_blank"
-                                className="cursor-pointer underline text-primary"
-                              >
-                                Website Link
-                              </a>
+                              {item.products.websites.is_local_vendor ? (
+                                <p>Local Vendor</p>
+                              ) : (
+                                <a
+                                  href={item.products.link || ""}
+                                  target="_blank"
+                                  className="cursor-pointer underline text-primary"
+                                >
+                                  Website Link
+                                </a>
+                              )}
                             </TableCell>
                             <TableCell>
                               <DropdownMenu
@@ -941,7 +952,7 @@ export default function MaterialOutputTab() {
                                 <DropdownMenuTrigger
                                   onClick={() => toggleDropdown(item.id)}
                                 >
-                                  <Trash2 className="text-secondary w-5 h-5" />
+                                  <Trash2 className="text-destructive w-5 h-5" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuPortal>
                                   <DropdownMenuContent
@@ -966,7 +977,7 @@ export default function MaterialOutputTab() {
                                       </div>
                                       <div
                                         onClick={() => toggleDropdown(item.id)}
-                                        className="bg-secondary text-white cursor-pointer py-1 px-3 rounded text-sm"
+                                        className="bg-destructive text-white cursor-pointer py-1 px-3 rounded text-sm"
                                       >
                                         No
                                       </div>
