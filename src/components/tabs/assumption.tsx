@@ -83,10 +83,13 @@ export default function AssumptionTab() {
       if (error) throw error;
 
       const initialValues: { [attributeId: string]: string } = {};
-      attributes.forEach((attribute) => {
-        const value = data[0].values[attribute.id];
-        initialValues[attribute.id] = value !== undefined ? String(value) : "0";
-      });
+      if (data?.length > 0) {
+        attributes.forEach((attribute) => {
+          const value = data[0].values[attribute.id];
+          initialValues[attribute.id] =
+            value !== undefined ? String(value) : "";
+        });
+      }
       setValues(initialValues);
     } catch (error) {
       console.log(error);
