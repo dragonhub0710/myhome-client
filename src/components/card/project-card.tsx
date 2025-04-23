@@ -109,7 +109,7 @@ export function ProjectCard(props: ProjectCardProps) {
         const { data: rows, error: getError } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .order(projectData.sortField, {
             ascending: projectData.sortDirection,
           });
@@ -120,7 +120,7 @@ export function ProjectCard(props: ProjectCardProps) {
         const { data: rows, error: getError } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .eq("status", projectData.filter)
           .order(projectData.sortField, {
             ascending: projectData.sortDirection,
@@ -151,7 +151,7 @@ export function ProjectCard(props: ProjectCardProps) {
         const { data, error } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .order(projectData.sortField, {
             ascending: projectData.sortDirection,
           });
@@ -167,7 +167,7 @@ export function ProjectCard(props: ProjectCardProps) {
         const { data, error } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .eq("status", projectData.filter)
           .order(projectData.sortField, {
             ascending: projectData.sortDirection,

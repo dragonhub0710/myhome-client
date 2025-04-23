@@ -29,7 +29,10 @@ type MaterialInputProps = {
   setCurrentStep: (currentStep: number) => void;
 };
 
-export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps) {
+export function DesignTheme({
+  currentStep,
+  setCurrentStep,
+}: MaterialInputProps) {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const auth = useAtomValue(authAtom);
@@ -64,7 +67,6 @@ export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps)
       setNewThemeIndex(currentThemeIndex);
     }
   }, [designThemeData, projectData.selectedItem?.design_theme]);
-
 
   useEffect(() => {
     if (designThemeData.list && designThemeData.list.length > 0) {
@@ -123,7 +125,7 @@ export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps)
       const { data: projects } = await supabase
         .from("projects")
         .select("*")
-        .eq("user_id", auth.user?.id);
+        .eq("user_email", auth.user?.email);
 
       setProjectData({
         ...projectData,
@@ -136,7 +138,11 @@ export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps)
         selectedItem: selectedTheme,
       });
 
-    console.log("✅ Selected Design Theme:", selectedTheme.name, selectedTheme.id);
+      console.log(
+        "✅ Selected Design Theme:",
+        selectedTheme.name,
+        selectedTheme.id
+      );
 
       const themeArrayString = JSON.stringify([selectedTheme.id]);
       const { data: upgrades, error } = await supabase
@@ -170,31 +176,34 @@ export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps)
           <div className="flex space-x-5">
             {designThemeData.list &&
               designThemeData.list.length > 0 &&
-              designThemeData.list.map((item: DesignThemeProps, idx: number) => {
-                  const isActive = projectData.selectedItem?.design_theme === item.id;
-                return (
-                  <div
-                    key={idx}
-                    className={`w-[190px] h-auto cursor-pointer relative space-y-2`}
-                    onClick={() => {
-                      if (newThemeIndex !== idx) {
-                        setNewThemeIndex(idx);
-                        handleSaveThemeImmediately(idx);
-                      }
-                    }}
-                  >
+              designThemeData.list.map(
+                (item: DesignThemeProps, idx: number) => {
+                  const isActive =
+                    projectData.selectedItem?.design_theme === item.id;
+                  return (
                     <div
-                      className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl border-2 ${
-                        isActive ? "border-primary" : "border-transparent"
-                      }`}
+                      key={idx}
+                      className={`w-[190px] h-auto cursor-pointer relative space-y-2`}
+                      onClick={() => {
+                        if (newThemeIndex !== idx) {
+                          setNewThemeIndex(idx);
+                          handleSaveThemeImmediately(idx);
+                        }
+                      }}
                     >
-                      <ImageCarousel images={item.images} />
+                      <div
+                        className={`relative block w-[178px] h-[254px] overflow-hidden rounded-xl border-2 ${
+                          isActive ? "border-primary" : "border-transparent"
+                        }`}
+                      >
+                        <ImageCarousel images={item.images} />
+                      </div>
+                      <p className="text-lg font-medium">{item.name}</p>
+                      <p className="text-sm">{item.description}</p>
                     </div>
-                    <p className="text-lg font-medium">{item.name}</p>
-                    <p className="text-sm">{item.description}</p>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
           </div>
         </div>
 
@@ -202,7 +211,10 @@ export function DesignTheme({ currentStep, setCurrentStep }: MaterialInputProps)
           <Button disabled className="bg-primary text-white hover:bg-blue-700">
             Previous Step
           </Button>
-          <Button onClick={handleGotoNextStep} className="bg-primary text-white hover:bg-blue-700">
+          <Button
+            onClick={handleGotoNextStep}
+            className="bg-primary text-white hover:bg-blue-700"
+          >
             Next Step
           </Button>
         </div>

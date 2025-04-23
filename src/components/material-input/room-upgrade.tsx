@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
- /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 
@@ -70,7 +70,6 @@ export function RoomUpgrade({
     },
   };
 
-
   useEffect(() => {
     if (roomUpgradeData.list && roomUpgradeData.list.length > 0) {
       roomUpgradeData.list.map((item: { id: string }, idx: number) => {
@@ -100,7 +99,6 @@ export function RoomUpgrade({
 
     fetchAddedUpgrades();
   }, [projectData.selectedItem?.id]);
-
 
   const handleGotoPrevStep = () => {
     setCurrentStep(currentStep - 1);
@@ -201,7 +199,10 @@ export function RoomUpgrade({
 
       toast({ title: "Upgrade and its products removed." });
     } catch (err: any) {
-      console.error("❌ Error removing upgrade and its products:", err?.message || err);
+      console.error(
+        "❌ Error removing upgrade and its products:",
+        err?.message || err
+      );
       toast({
         title: "Error removing upgrade.",
         variant: "destructive",
@@ -209,157 +210,155 @@ export function RoomUpgrade({
     }
   };
 
-
-const handleSaveChanges = async () => {
-  if (!roomUpgradeData.list || roomUpgradeData.list.length === 0) return;
-  try {
-    setIsLoading(true);
-
-    const selectedRoomUpgrade = roomUpgradeData.list[newUpgradeIndex];
-
-    // ✅ Parse product IDs from the upgrade
-    let upgradeProductIds: string[] = [];
+  const handleSaveChanges = async () => {
+    if (!roomUpgradeData.list || roomUpgradeData.list.length === 0) return;
     try {
-      upgradeProductIds = Array.isArray(selectedRoomUpgrade.products)
-        ? selectedRoomUpgrade.products
-        : JSON.parse(selectedRoomUpgrade.products || "[]");
-    } catch (e) {
-      console.error("Error parsing product IDs from upgrade:", e);
-      upgradeProductIds = [];
-    }
+      setIsLoading(true);
 
-    // ✅ Fetch full product records from Supabase
-    if (upgradeProductIds.length > 0) {
-      console.log("Upgrade Product IDs:", upgradeProductIds);
+      const selectedRoomUpgrade = roomUpgradeData.list[newUpgradeIndex];
 
-      const { data: fullProducts, error: productFetchError } = await supabase
-        .from("products")
-        .select("id, themes")
-        .in("id", upgradeProductIds);
+      // ✅ Parse product IDs from the upgrade
+      let upgradeProductIds: string[] = [];
+      try {
+        upgradeProductIds = Array.isArray(selectedRoomUpgrade.products)
+          ? selectedRoomUpgrade.products
+          : JSON.parse(selectedRoomUpgrade.products || "[]");
+      } catch (e) {
+        console.error("Error parsing product IDs from upgrade:", e);
+        upgradeProductIds = [];
+      }
 
-      if (productFetchError) throw productFetchError;
+      // ✅ Fetch full product records from Supabase
+      if (upgradeProductIds.length > 0) {
+        console.log("Upgrade Product IDs:", upgradeProductIds);
 
-      const currentThemeId = projectData.selectedItem.design_theme || null;
+        const { data: fullProducts, error: productFetchError } = await supabase
+          .from("products")
+          .select("id, themes")
+          .in("id", upgradeProductIds);
 
-      const { data: existingProjectProducts, error: existingFetchError } = await supabase
-        .from("project_products")
-        .select("product_id, quantity")
+        if (productFetchError) throw productFetchError;
+
+        const currentThemeId = projectData.selectedItem.design_theme || null;
+
+        const { data: existingProjectProducts, error: existingFetchError } =
+          await supabase
+            .from("project_products")
+            .select("product_id, quantity")
+            .eq("project_id", projectData.selectedItem.id);
+
+        if (existingFetchError) throw existingFetchError;
+
+        const existingMap = new Map(
+          (existingProjectProducts || []).map((p) => [p.product_id, p.quantity])
+        );
+
+        const productInserts: {
+          product_id: string;
+          quantity: number;
+          phase: string;
+          status: string;
+          project_id: string;
+        }[] = [];
+
+        fullProducts.forEach((p: any) => {
+          const productThemes: string[] = p.themes || [];
+
+          const isThemeCompatible =
+            !currentThemeId ||
+            productThemes.length === 0 ||
+            productThemes.includes(currentThemeId);
+
+          if (!existingMap.has(p.id) && isThemeCompatible) {
+            productInserts.push({
+              product_id: p.id,
+              quantity: 1,
+              phase: "1",
+              status: "incomplete",
+              project_id: projectData.selectedItem.id,
+            });
+          } else if (!isThemeCompatible) {
+            console.log(`🚫 Skipping product ${p.id} due to theme mismatch.`);
+          }
+        });
+
+        if (productInserts.length > 0) {
+          const { error: insertProductsError } = await supabase
+            .from("project_products")
+            .insert(productInserts);
+          if (insertProductsError) throw insertProductsError;
+        }
+      }
+
+      // ✅ Prevent duplicate upgrade insertion
+      const { data: existingUpgrades } = await supabase
+        .from("project_upgrades")
+        .select("upgrade_id")
         .eq("project_id", projectData.selectedItem.id);
 
-      if (existingFetchError) throw existingFetchError;
-
-      const existingMap = new Map(
-        (existingProjectProducts || []).map((p) => [p.product_id, p.quantity])
+      const alreadyAdded = existingUpgrades?.some(
+        (e: any) => e.upgrade_id === selectedRoomUpgrade.id
       );
 
-      const productInserts: {
-        product_id: string;
-        quantity: number;
-        phase: string;
-        status: string;
-        project_id: string;
-      }[] = [];
+      if (alreadyAdded) {
+        toast({ title: "This upgrade is already added to the project." });
+      } else {
+        const { error: insertError } = await supabase
+          .from("project_upgrades")
+          .insert([
+            {
+              project_id: projectData.selectedItem.id,
+              upgrade_id: selectedRoomUpgrade.id,
+            },
+          ]);
+        if (insertError) throw insertError;
+      }
 
-      fullProducts.forEach((p: any) => {
-        const productThemes: string[] = p.themes || [];
+      // ✅ Re-fetch upgrades after insert
+      const { data: upgradesInProject, error: fetchError } = await supabase
+        .from("project_upgrades")
+        .select("upgrade_id")
+        .eq("project_id", projectData.selectedItem.id);
 
-        const isThemeCompatible =
-          !currentThemeId ||
-          productThemes.length === 0 ||
-          productThemes.includes(currentThemeId);
+      if (fetchError) {
+        console.error("❌ Fetch error:", fetchError);
+      } else {
+        setAddedUpgrades(upgradesInProject.map((u) => u.upgrade_id));
+      }
 
-        if (!existingMap.has(p.id) && isThemeCompatible) {
-          productInserts.push({
-            product_id: p.id,
-            quantity: 1,
-            phase: "1",
-            status: "incomplete",
-            project_id: projectData.selectedItem.id,
-          });
-        } else if (!isThemeCompatible) {
-          console.log(`🚫 Skipping product ${p.id} due to theme mismatch.`);
-        }
+      // ✅ Refresh project and room upgrade data
+      const { data: selected } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectData.selectedItem.id);
+
+      const { data: projects } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_email", auth.user?.email);
+
+      setProjectData({
+        ...projectData,
+        list: projects,
+        selectedItem: selected?.[0],
       });
 
-      if (productInserts.length > 0) {
-        const { error: insertProductsError } = await supabase
-          .from("project_products")
-          .insert(productInserts);
-        if (insertProductsError) throw insertProductsError;
-      }
+      setRoomUpgradeData({
+        ...roomUpgradeData,
+        selectedItem: selectedRoomUpgrade,
+      });
+
+      setOpen(false);
+    } catch (err: any) {
+      console.error("Error saving:", err);
+      toast({
+        title: "Error saving.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    // ✅ Prevent duplicate upgrade insertion
-    const { data: existingUpgrades } = await supabase
-      .from("project_upgrades")
-      .select("upgrade_id")
-      .eq("project_id", projectData.selectedItem.id);
-
-    const alreadyAdded = existingUpgrades?.some(
-      (e: any) => e.upgrade_id === selectedRoomUpgrade.id
-    );
-
-    if (alreadyAdded) {
-      toast({ title: "This upgrade is already added to the project." });
-    } else {
-      const { error: insertError } = await supabase
-        .from("project_upgrades")
-        .insert([
-          {
-            project_id: projectData.selectedItem.id,
-            upgrade_id: selectedRoomUpgrade.id,
-          },
-        ]);
-      if (insertError) throw insertError;
-    }
-
-    // ✅ Re-fetch upgrades after insert
-    const { data: upgradesInProject, error: fetchError } = await supabase
-      .from("project_upgrades")
-      .select("upgrade_id")
-      .eq("project_id", projectData.selectedItem.id);
-
-    if (fetchError) {
-      console.error("❌ Fetch error:", fetchError);
-    } else {
-      setAddedUpgrades(upgradesInProject.map((u) => u.upgrade_id));
-    }
-
-    // ✅ Refresh project and room upgrade data
-    const { data: selected } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectData.selectedItem.id);
-
-    const { data: projects } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("user_id", auth.user?.id);
-
-    setProjectData({
-      ...projectData,
-      list: projects,
-      selectedItem: selected?.[0],
-    });
-
-    setRoomUpgradeData({
-      ...roomUpgradeData,
-      selectedItem: selectedRoomUpgrade,
-    });
-
-    setOpen(false);
-  } catch (err: any) {
-    console.error("Error saving:", err);
-    toast({
-      title: "Error saving.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
+  };
 
   const handleSelectRoomUpgrade = async (index: number) => {
     setNewUpgradeIndex(index);
@@ -437,36 +436,51 @@ const handleSaveChanges = async () => {
               )}
           </div>
 
-         <div className="mt-6 border-t pt-4">
-           <h2 className="text-lg font-semibold mb-2">Currently Added Room Upgrades:</h2>
-           {addedUpgrades.length === 0 ? (
-             <p className="text-sm italic text-muted-foreground">No room upgrades added yet.</p>
-           ) : (
-             <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-               {roomUpgradeData.list
-                 .filter((upgrade: RoomUpgrade) => addedUpgrades.includes(upgrade.id))
-                   .map((upgrade: RoomUpgrade, idx: number) => (
-                   <li key={idx} className="flex justify-between items-center pr-2">
-                     <div>
-                       <span className="text-blue-600 font-medium">{upgrade.name}</span>
-                       {upgrade.locations?.name && (
-                         <> — <span className="italic text-gray-500">{upgrade.locations.name}</span></>
-                       )}
-                     </div>
-                     <Button
-                       variant="ghost"
-                       className="text-red-600 text-xs hover:bg-red-50"
-                       onClick={() => removeUpgradeAndItsProducts(upgrade.id)}
-                     >
-                       Remove
-                     </Button>
-                   </li>
-                 ))}
-             </ul>
-           )}
-         </div>
-
-
+          <div className="mt-6 border-t pt-4">
+            <h2 className="text-lg font-semibold mb-2">
+              Currently Added Room Upgrades:
+            </h2>
+            {addedUpgrades.length === 0 ? (
+              <p className="text-sm italic text-muted-foreground">
+                No room upgrades added yet.
+              </p>
+            ) : (
+              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+                {roomUpgradeData.list
+                  .filter((upgrade: RoomUpgrade) =>
+                    addedUpgrades.includes(upgrade.id)
+                  )
+                  .map((upgrade: RoomUpgrade, idx: number) => (
+                    <li
+                      key={idx}
+                      className="flex justify-between items-center pr-2"
+                    >
+                      <div>
+                        <span className="text-blue-600 font-medium">
+                          {upgrade.name}
+                        </span>
+                        {upgrade.locations?.name && (
+                          <>
+                            {" "}
+                            —{" "}
+                            <span className="italic text-gray-500">
+                              {upgrade.locations.name}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="text-red-600 text-xs hover:bg-red-50"
+                        onClick={() => removeUpgradeAndItsProducts(upgrade.id)}
+                      >
+                        Remove
+                      </Button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
         </div>
         <div className="flex gap-4 pt-4">
           <Button
@@ -484,7 +498,6 @@ const handleSaveChanges = async () => {
           >
             Complete Material Input
           </Button>
-
         </div>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>

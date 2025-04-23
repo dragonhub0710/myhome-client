@@ -57,7 +57,7 @@ export default function NewProjectDialog({ open, setOpen }: NewProjectProps) {
     setIsLoading(true);
     try {
       const { error: createError } = await supabase.from("projects").insert({
-        user_id: auth.user?.id,
+        user_email: auth.user?.email,
         name: project.name,
         full_bathrooms: project.fullBathrooms,
         half_bathrooms: project.halfBathrooms,
@@ -80,7 +80,7 @@ export default function NewProjectDialog({ open, setOpen }: NewProjectProps) {
       const { data: rows, error } = await supabase
         .from("projects")
         .select("*")
-        .eq("user_id", auth.user?.id)
+        .eq("user_email", auth.user?.email)
         .order(projectList.sortField, {
           ascending: projectList.sortDirection,
         });

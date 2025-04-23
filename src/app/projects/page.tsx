@@ -97,7 +97,7 @@ export default function ProjectsPage() {
         const { data, error } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .order(sortby, { ascending: sortDirection });
 
         if (error) {
@@ -111,7 +111,7 @@ export default function ProjectsPage() {
         const { data, error } = await supabase
           .from("projects")
           .select("*")
-          .eq("user_id", auth.user?.id)
+          .eq("user_email", auth.user?.email)
           .eq("status", filter)
           .order(sortby, { ascending: sortDirection });
 
